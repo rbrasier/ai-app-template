@@ -1,7 +1,7 @@
 "use client";
 
 import type { ErrorLogStatus } from "@template/domain";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -67,9 +67,8 @@ export default function AdminErrorsPage() {
               {groupsQuery.data?.map((g) => {
                 const isOpen = open !== null && sameGroup(open, g);
                 return (
-                  <>
+                  <React.Fragment key={`${g.message}::${g.page ?? ""}`}>
                     <TableRow
-                      key={`${g.message}::${g.page ?? ""}`}
                       className="cursor-pointer"
                       onClick={() =>
                         setOpen(isOpen ? null : { message: g.message, page: g.page })
@@ -131,7 +130,7 @@ export default function AdminErrorsPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
