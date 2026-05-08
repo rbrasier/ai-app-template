@@ -9,8 +9,8 @@ import {
   type UserUpdate,
 } from "@template/domain";
 import { eq } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { core_users } from "../db/schema/core.js";
+import type { Database } from "../db/client";
+import { core_users } from "../db/schema/core";
 
 const toEntity = (row: typeof core_users.$inferSelect): User => ({
   id: row.id,

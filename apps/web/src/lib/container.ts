@@ -17,9 +17,10 @@ import {
   LanguageModelAdapter,
   createAuth,
   createDatabase,
+  resolveSession,
   withOptionalLangfuse,
 } from "@template/adapters";
-import { serverEnv } from "./env.js";
+import { serverEnv } from "./env";
 
 let cached: ReturnType<typeof build> | null = null;
 
@@ -50,6 +51,7 @@ const build = () => {
     env,
     db,
     auth,
+    resolveSession: (token: string) => resolveSession(db, token),
     services: { llm, agent, errorLogger },
     repos: { users, conversations, errorLogs },
     useCases: {

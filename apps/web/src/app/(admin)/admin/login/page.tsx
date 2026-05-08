@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -18,8 +20,22 @@ export default function AdminLoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await authClient.signIn.magicLink({ email, callbackURL: "/admin" });
-      setSent(true);
+      if (isDev) {
+        const res = await fetch("/api/dev-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          window.location.href = "/admin";
+        } else {
+          const body = (await res.json()) as { error?: string };
+          setError(body.error ?? "Login failed");
+        }
+      } else {
+        await authClient.signIn.magicLink({ email, callbackURL: "/admin" });
+        setSent(true);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -53,7 +69,7 @@ export default function AdminLoginPage() {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Sending…" : "Send magic link"}
+                {submitting ? "Signing in…" : isDev ? "Sign in" : "Send magic link"}
               </Button>
             </form>
           )}

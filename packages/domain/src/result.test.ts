@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ok, err, isOk, isErr } from "./result.js";
-import { domainError } from "./errors/domain-error.js";
+import { ok, err, isOk, isErr } from "./result";
+import { domainError } from "./errors/domain-error";
 
 describe("Result", () => {
   it("ok wraps a value as { data }", () => {

@@ -1,1 +1,1 @@
-export * from "./drizzle-error-logger.js";
+export * from "./drizzle-error-logger";

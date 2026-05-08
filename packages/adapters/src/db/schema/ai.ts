@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { core_users } from "./core.js";
+import { core_users } from "./core";
 
 export const ai_conversations = pgTable("ai_conversations", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

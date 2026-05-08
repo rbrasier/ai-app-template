@@ -1,1 +1,1 @@
-export * from "./langfuse-tracing-adapter.js";
+export * from "./langfuse-tracing-adapter";

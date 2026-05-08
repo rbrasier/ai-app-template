@@ -1,4 +1,4 @@
-import type { DomainError } from "./errors/domain-error.js";
+import type { DomainError } from "./errors/domain-error";
 
 export type Result<T, E extends DomainError = DomainError> =
   | { data: T; error?: undefined }

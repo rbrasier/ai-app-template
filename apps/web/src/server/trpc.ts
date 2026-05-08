@@ -10,16 +10,29 @@ export interface TrpcContext {
   readonly headers: Headers;
 }
 
+const getSessionToken = (req: Request): string | null => {
+  const cookie = req.headers.get("cookie");
+  if (!cookie) return null;
+  const pair = cookie.split(";").map((c) => c.trim()).find((c) => c.startsWith("better-auth.session_token="));
+  return pair ? pair.slice("better-auth.session_token=".length) : null;
+};
+
 export const createTrpcContext = async (req: Request): Promise<TrpcContext> => {
   const container = getContainer();
-  // Better Auth session resolution — wire up as needed.
-  // For now, anonymous by default; admin gates check container.auth in middleware.
-  return {
-    container,
-    userId: null,
-    isAdmin: false,
-    headers: req.headers,
-  };
+
+  let userId: string | null = null;
+  let isAdmin = false;
+
+  const token = getSessionToken(req);
+  if (token) {
+    const session = await container.resolveSession(token);
+    if (session) {
+      userId = session.userId;
+      isAdmin = session.isAdmin;
+    }
+  }
+
+  return { container, userId, isAdmin, headers: req.headers };
 };
 
 const t = initTRPC.context<TrpcContext>().create({

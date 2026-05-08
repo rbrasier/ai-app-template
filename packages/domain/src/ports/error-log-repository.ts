@@ -4,8 +4,8 @@ import type {
   ErrorLogGroup,
   ErrorLogStatus,
   NewErrorLog,
-} from "../entities/error-log.js";
-import type { Result } from "../result.js";
+} from "../entities/error-log";
+import type { Result } from "../result";
 
 export interface IErrorLogRepository {
   create(input: NewErrorLog): Promise<Result<ErrorLog>>;

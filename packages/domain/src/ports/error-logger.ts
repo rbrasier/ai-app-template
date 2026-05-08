@@ -1,5 +1,5 @@
-import type { ErrorLogLevel } from "../entities/error-log.js";
-import type { Result } from "../result.js";
+import type { ErrorLogLevel } from "../entities/error-log";
+import type { Result } from "../result";
 
 export interface ErrorLogPayload {
   readonly level: ErrorLogLevel;

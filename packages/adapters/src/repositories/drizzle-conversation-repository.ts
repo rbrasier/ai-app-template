@@ -10,8 +10,8 @@ import {
   type Result,
 } from "@template/domain";
 import { asc, desc, eq } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { ai_conversations, ai_messages } from "../db/schema/ai.js";
+import type { Database } from "../db/client";
+import { ai_conversations, ai_messages } from "../db/schema/ai";
 
 const toConv = (row: typeof ai_conversations.$inferSelect): Conversation => ({
   id: row.id,

@@ -3,8 +3,8 @@ import type {
   Message,
   NewConversation,
   NewMessage,
-} from "../entities/conversation.js";
-import type { Result } from "../result.js";
+} from "../entities/conversation";
+import type { Result } from "../result";
 
 export interface IConversationRepository {
   create(input: NewConversation): Promise<Result<Conversation>>;

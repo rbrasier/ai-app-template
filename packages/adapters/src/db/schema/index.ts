@@ -1,3 +1,3 @@
-export * from "./core.js";
-export * from "./ai.js";
-export * from "./app.js";
+export * from "./core";
+export * from "./ai";
+export * from "./app";

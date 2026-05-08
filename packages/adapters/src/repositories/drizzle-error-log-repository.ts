@@ -11,8 +11,8 @@ import {
   type Result,
 } from "@template/domain";
 import { and, count, desc, eq, isNull, max, sql, type SQL } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { app_error_log } from "../db/schema/app.js";
+import type { Database } from "../db/client";
+import { app_error_log } from "../db/schema/app";
 
 const toEntity = (row: typeof app_error_log.$inferSelect): ErrorLog => ({
   id: row.id,

@@ -1,5 +1,5 @@
-import type { NewUser, User, UserUpdate } from "../entities/user.js";
-import type { Result } from "../result.js";
+import type { NewUser, User, UserUpdate } from "../entities/user";
+import type { Result } from "../result";
 
 export interface IUserRepository {
   create(user: NewUser): Promise<Result<User>>;

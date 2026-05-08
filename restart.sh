@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+ulimit -n 65536 2>/dev/null || true
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 

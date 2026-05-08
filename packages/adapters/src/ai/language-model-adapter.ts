@@ -10,7 +10,7 @@ import {
   type StreamTextInput,
 } from "@template/domain";
 import { generateObject, streamObject, streamText } from "ai";
-import { resolveModel } from "./providers.js";
+import { resolveModel } from "./providers";
 
 export class LanguageModelAdapter implements ILanguageModel {
   constructor(public readonly provider: ProviderName) {}

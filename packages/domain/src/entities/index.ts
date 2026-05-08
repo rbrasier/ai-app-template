@@ -1,3 +1,3 @@
-export * from "./user.js";
-export * from "./error-log.js";
-export * from "./conversation.js";
+export * from "./user";
+export * from "./error-log";
+export * from "./conversation";

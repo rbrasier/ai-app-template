@@ -1,4 +1,4 @@
-import type { Result } from "../result.js";
+import type { Result } from "../result";
 
 export interface AgentInput {
   readonly prompt: string;

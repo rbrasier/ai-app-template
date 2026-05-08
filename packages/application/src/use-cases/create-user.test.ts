@@ -9,7 +9,7 @@ import {
   err,
   ok,
 } from "@template/domain";
-import { CreateUser } from "./create-user.js";
+import { CreateUser } from "./create-user";
 
 class InMemoryUsers implements IUserRepository {
   private byId = new Map<string, User>();

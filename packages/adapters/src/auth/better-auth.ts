@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
-import type { Database } from "../db/client.js";
+import type { Database } from "../db/client";
 
 export interface AuthConfig {
   readonly secret: string;

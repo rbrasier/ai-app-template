@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { core_users } from "./core.js";
+import { core_users } from "./core";
 
 export const app_error_log = pgTable(
   "app_error_log",
