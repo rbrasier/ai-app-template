@@ -5,6 +5,7 @@ import type {
   Result,
   StreamObjectInput,
   StreamTextInput,
+  TokenUsage,
 } from "@template/domain";
 import { Langfuse } from "langfuse";
 
@@ -36,40 +37,85 @@ export class LangfuseTracingAdapter implements ILanguageModel {
     return this.inner.provider;
   }
 
-  private async traced<T>(
-    name: string,
-    input: unknown,
-    fn: () => Promise<Result<T>>,
-  ): Promise<Result<T>> {
-    const trace = this.client.trace({ name, input: input as Record<string, unknown> });
+  async generateObject<T>(
+    input: GenerateObjectInput,
+  ): Promise<Result<{ object: T; usage: TokenUsage }>> {
+    const trace = this.client.trace({
+      name: "generateObject",
+      input: { purpose: input.purpose, model: input.model, provider: this.provider },
+      userId: input.userId ?? undefined,
+    });
     const start = Date.now();
-    const result = await fn();
+    const result = await this.inner.generateObject<T>(input);
     trace.update({
       output: result.error
         ? { error: result.error.code, message: result.error.message }
         : { ok: true },
-      metadata: { latencyMs: Date.now() - start, provider: this.provider },
+      metadata: {
+        latencyMs: Date.now() - start,
+        provider: this.provider,
+        ...(!result.error && { usage: result.data.usage }),
+      },
     });
     return result;
   }
 
-  generateObject<T>(input: GenerateObjectInput) {
-    return this.traced<{ object: T }>("generateObject", input, () =>
-      this.inner.generateObject<T>(input),
-    );
+  async streamText(
+    input: StreamTextInput,
+  ): Promise<Result<{ textStream: AsyncIterable<string>; usage: Promise<TokenUsage> }>> {
+    const trace = this.client.trace({
+      name: "streamText",
+      input: { purpose: input.purpose, model: input.model, provider: this.provider },
+      userId: input.userId ?? undefined,
+    });
+    const start = Date.now();
+    const result = await this.inner.streamText(input);
+    if (!result.error) {
+      void result.data.usage.then((usage) => {
+        trace.update({
+          output: { ok: true },
+          metadata: { latencyMs: Date.now() - start, provider: this.provider, usage },
+        });
+      });
+    } else {
+      trace.update({
+        output: { error: result.error.code, message: result.error.message },
+        metadata: { latencyMs: Date.now() - start, provider: this.provider },
+      });
+    }
+    return result;
   }
 
-  streamText(input: StreamTextInput) {
-    return this.traced<{ textStream: AsyncIterable<string> }>("streamText", input, () =>
-      this.inner.streamText(input),
-    );
-  }
-
-  streamObject<T>(input: StreamObjectInput) {
-    return this.traced<{
+  async streamObject<T>(
+    input: StreamObjectInput,
+  ): Promise<
+    Result<{
       partialObjectStream: AsyncIterable<Partial<T>>;
       object: Promise<T>;
-    }>("streamObject", input, () => this.inner.streamObject<T>(input));
+      usage: Promise<TokenUsage>;
+    }>
+  > {
+    const trace = this.client.trace({
+      name: "streamObject",
+      input: { purpose: input.purpose, model: input.model, provider: this.provider },
+      userId: input.userId ?? undefined,
+    });
+    const start = Date.now();
+    const result = await this.inner.streamObject<T>(input);
+    if (!result.error) {
+      void result.data.usage.then((usage) => {
+        trace.update({
+          output: { ok: true },
+          metadata: { latencyMs: Date.now() - start, provider: this.provider, usage },
+        });
+      });
+    } else {
+      trace.update({
+        output: { error: result.error.code, message: result.error.message },
+        metadata: { latencyMs: Date.now() - start, provider: this.provider },
+      });
+    }
+    return result;
   }
 }
 

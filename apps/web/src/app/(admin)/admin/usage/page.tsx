@@ -71,8 +71,10 @@ export default function AdminUsagePage() {
                   <TableHead>Provider</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Calls</TableHead>
-                  <TableHead>Prompt tokens</TableHead>
-                  <TableHead>Completion tokens</TableHead>
+                  <TableHead>Input tokens</TableHead>
+                  <TableHead className="text-green-600 dark:text-green-400">Cache read</TableHead>
+                  <TableHead className="text-yellow-600 dark:text-yellow-400">Cache write</TableHead>
+                  <TableHead>Output tokens</TableHead>
                   <TableHead>Estimated cost</TableHead>
                 </TableRow>
               </TableHeader>
@@ -83,6 +85,8 @@ export default function AdminUsagePage() {
                     <TableCell className="font-mono text-xs">{r.model}</TableCell>
                     <TableCell>{r.eventCount.toLocaleString()}</TableCell>
                     <TableCell>{r.totalPromptTokens.toLocaleString()}</TableCell>
+                    <TableCell className="text-green-600 dark:text-green-400">{r.totalCacheReadTokens.toLocaleString()}</TableCell>
+                    <TableCell className="text-yellow-600 dark:text-yellow-400">{r.totalCacheWriteTokens.toLocaleString()}</TableCell>
                     <TableCell>{r.totalCompletionTokens.toLocaleString()}</TableCell>
                     <TableCell>${r.totalCostUsd.toFixed(4)}</TableCell>
                   </TableRow>

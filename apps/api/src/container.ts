@@ -35,6 +35,7 @@ import {
   RedisHealthChecker,
   createDatabase,
   withOptionalLangfuse,
+  withUsageTracking,
 } from "@template/adapters";
 import type { Env } from "./env.js";
 
@@ -52,7 +53,7 @@ export const buildContainer = (env: Env) => {
   const jobRepo = new DrizzleJobRepository(db);
 
   const baseLlm = new LanguageModelAdapter(env.AI_DEFAULT_PROVIDER);
-  const llm = withOptionalLangfuse(baseLlm, env);
+  const llm = withOptionalLangfuse(withUsageTracking(baseLlm, usageRepo), env);
 
   const dbChecker = new DbHealthChecker(db);
   const redisChecker = new RedisHealthChecker(env.REDIS_URL);

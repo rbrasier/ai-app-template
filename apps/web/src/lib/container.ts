@@ -34,6 +34,7 @@ import {
   createDatabase,
   resolveSession,
   withOptionalLangfuse,
+  withUsageTracking,
 } from "@template/adapters";
 import { serverEnv } from "./env";
 
@@ -54,7 +55,7 @@ const build = () => {
   const jobRepo = new DrizzleJobRepository(db);
 
   const baseLlm = new LanguageModelAdapter(env.AI_DEFAULT_PROVIDER);
-  const llm = withOptionalLangfuse(baseLlm, env);
+  const llm = withOptionalLangfuse(withUsageTracking(baseLlm, usageRepo), env);
   const agent = new LangGraphAgentRunner(llm);
 
   const auth = createAuth(db, {
