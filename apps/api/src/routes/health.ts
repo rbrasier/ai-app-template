@@ -1,7 +1,17 @@
 import { Router } from "express";
+import type { Container } from "../container.js";
 
-export const healthRouter = Router();
+export const buildHealthRouter = (container: Container) => {
+  const router = Router();
 
-healthRouter.get("/", (_req, res) => {
-  res.json({ ok: true, service: "api", time: new Date().toISOString() });
-});
+  router.get("/", async (_req, res) => {
+    const result = await container.useCases.getSystemHealth.execute();
+    if (result.error) {
+      res.status(500).json({ ok: false, error: result.error.message });
+      return;
+    }
+    res.json(result.data);
+  });
+
+  return router;
+};

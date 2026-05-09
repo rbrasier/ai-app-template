@@ -55,6 +55,8 @@ export class SendMessage {
     if (userMsg.error) return userMsg;
 
     const stream = await this.llm.streamObject<SampleResponse>({
+      purpose: "chat",
+      userId: input.userId,
       schema: sampleResponseSchema,
       system: SAMPLE_SYSTEM_PROMPT,
       prompt: input.prompt,

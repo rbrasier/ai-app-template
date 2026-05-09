@@ -31,6 +31,7 @@ export class LangGraphAgentRunner implements IAgentRunner {
   constructor(private readonly llm: ILanguageModel) {
     const passthroughNode = async (state: typeof AgentState.State) => {
       const stream = await this.llm.streamText({
+        purpose: "agent",
         prompt: state.prompt,
         system: "You are a helpful assistant.",
       });

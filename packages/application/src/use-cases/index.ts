@@ -6,3 +6,8 @@ export * from "./log-error";
 export * from "./list-errors";
 export * from "./update-error-status";
 export * from "./send-message";
+export * from "./log-audit-event";
+export * from "./get-feature-flag";
+export * from "./track-usage";
+export * from "./job-health";
+export * from "./get-system-health";
