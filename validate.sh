@@ -100,6 +100,82 @@ else
   printf '%b' "$DOC_VIOLATIONS"
 fi
 
+# ── 9. health checker wiring ──────────────────────────────────────────────────
+# Verify every required health-checker adapter class exists in the codebase
+# so no derived app ships without them wired.
+section "9. health checker adapters exist in codebase"
+HEALTH_FILES=(
+  "packages/adapters/src/health/db-health-checker.ts"
+  "packages/adapters/src/health/redis-health-checker.ts"
+  "packages/adapters/src/health/ai-health-checker.ts"
+  "packages/adapters/src/health/composite-health-checker.ts"
+)
+MISSING_HEALTH=""
+for f in "${HEALTH_FILES[@]}"; do
+  [ -f "$f" ] || MISSING_HEALTH+="  missing: $f\n"
+done
+if [ -z "$MISSING_HEALTH" ]; then
+  pass "health checker adapters present"
+else
+  fail "health checker adapters missing:"
+  printf '%b' "$MISSING_HEALTH"
+fi
+
+# Verify CompositeHealthChecker is wired into the API container
+if grep -q "CompositeHealthChecker" apps/api/src/container.ts 2>/dev/null; then
+  pass "CompositeHealthChecker wired in API container"
+else
+  fail "CompositeHealthChecker not found in apps/api/src/container.ts"
+fi
+
+# ── 10. external service connectivity (WARN only — never blocks CI) ───────────
+section "10. external service connectivity (informational)"
+warn() { echo -e "${YELLOW}WARN${NC} — $1"; }
+
+# Postgres
+if command -v pg_isready &>/dev/null && [ -n "${DATABASE_URL:-}" ]; then
+  # Extract host and port from DATABASE_URL
+  PG_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:/]+).*|\1|')
+  PG_PORT=$(echo "$DATABASE_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')
+  PG_PORT="${PG_PORT:-5432}"
+  if pg_isready -h "$PG_HOST" -p "$PG_PORT" -q 2>/dev/null; then
+    pass "postgres reachable ($PG_HOST:$PG_PORT)"
+  else
+    warn "postgres not reachable at $PG_HOST:$PG_PORT (expected in CI — ignore if no DB)"
+  fi
+else
+  warn "postgres connectivity skipped (pg_isready not found or DATABASE_URL not set)"
+fi
+
+# Redis
+REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+REDIS_HOST=$(echo "$REDIS_URL" | sed -E 's|redis://([^:/]+).*|\1|')
+REDIS_PORT=$(echo "$REDIS_URL" | sed -E 's|redis://[^:]+:([0-9]+).*|\1|')
+REDIS_PORT="${REDIS_PORT:-6379}"
+if command -v redis-cli &>/dev/null; then
+  if redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
+    pass "redis reachable ($REDIS_HOST:$REDIS_PORT)"
+  else
+    warn "redis not reachable at $REDIS_HOST:$REDIS_PORT (expected in CI — ignore if no Redis)"
+  fi
+else
+  warn "redis connectivity skipped (redis-cli not found)"
+fi
+
+# AI provider key
+AI_PROVIDER="${AI_DEFAULT_PROVIDER:-anthropic}"
+case "$AI_PROVIDER" in
+  anthropic)  KEY_VAR="ANTHROPIC_API_KEY" ;;
+  openai)     KEY_VAR="OPENAI_API_KEY" ;;
+  mistral)    KEY_VAR="MISTRAL_API_KEY" ;;
+  *)          KEY_VAR="" ;;
+esac
+if [ -n "${KEY_VAR:-}" ] && [ -n "${!KEY_VAR:-}" ]; then
+  pass "AI provider key set ($AI_PROVIDER)"
+else
+  warn "AI provider key not set for '$AI_PROVIDER' (set ${KEY_VAR:-ANTHROPIC_API_KEY} to suppress)"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"

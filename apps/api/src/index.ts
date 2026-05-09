@@ -1,9 +1,17 @@
 import "dotenv/config";
+import { setupTelemetry } from "@template/adapters";
 import { buildApp } from "./app.js";
 import { buildContainer } from "./container.js";
 import { loadEnv } from "./env.js";
 
 const env = loadEnv();
+
+setupTelemetry({
+  serviceName: env.OTEL_SERVICE_NAME,
+  otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  isDev: env.NODE_ENV === "development",
+});
+
 const container = buildContainer(env);
 const app = buildApp(container);
 

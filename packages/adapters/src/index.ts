@@ -5,3 +5,7 @@ export * from "./agents/index";
 export * from "./auth/index";
 export * from "./errors/index";
 export * from "./observability/index";
+export * from "./logging/index";
+export * from "./audit/index";
+export * from "./health/index";
+export * from "./telemetry/index";

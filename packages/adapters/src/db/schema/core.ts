@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, real, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const core_users = pgTable("core_users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -26,6 +26,27 @@ export const core_verification_tokens = pgTable("core_verification_tokens", {
   identifier: text("identifier").notNull(),
   token: text("token").notNull().unique(),
   expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const core_audit_log = pgTable("core_audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  actor_id: uuid("actor_id"),
+  action: text("action").notNull(),
+  resource_type: text("resource_type").notNull(),
+  resource_id: text("resource_id"),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const core_feature_flag = pgTable("core_feature_flag", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  enabled: boolean("enabled").notNull().default(false),
+  rollout_pct: real("rollout_pct").notNull().default(100),
+  description: text("description"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
