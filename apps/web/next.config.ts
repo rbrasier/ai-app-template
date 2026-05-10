@@ -11,6 +11,14 @@ const config: NextConfig = {
     "@template/adapters",
     "@template/shared",
   ],
+  serverExternalPackages: [
+    "pino",
+    "pino-pretty",
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/instrumentation-http",
+    "@opentelemetry/instrumentation-express",
+    "@opentelemetry/instrumentation-pg",
+  ],
 };
 
 export default config;
