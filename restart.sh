@@ -30,7 +30,8 @@ if [ -f .env ]; then
   source .env
   set +a
 fi
-pnpm --filter @template/adapters db:migrate || {
+ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
+pnpm --filter "$ADAPTERS_PKG" db:migrate || {
   echo "  migration failed — fix DATABASE_URL or run 'docker compose up -d postgres' first"
   exit 1
 }

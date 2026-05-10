@@ -22,6 +22,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/usage" className="text-muted-foreground hover:text-foreground">
               Usage
             </Link>
+            <Link href="/admin/settings" className="text-muted-foreground hover:text-foreground">
+              Settings
+            </Link>
           </nav>
           <div className="ml-auto">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">

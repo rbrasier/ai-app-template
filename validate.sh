@@ -34,7 +34,8 @@ if pnpm -s test; then pass "tests"; else fail "tests"; fi
 
 # ── 4. drizzle schema check ───────────────────────────────────────────────────
 section "4. drizzle-kit check"
-if pnpm --filter @template/adapters -s db:check; then
+ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
+if pnpm --filter "$ADAPTERS_PKG" -s db:check; then
   pass "drizzle schema"
 else
   fail "drizzle schema"

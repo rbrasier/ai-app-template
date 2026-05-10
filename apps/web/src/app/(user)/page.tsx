@@ -18,6 +18,9 @@ export default function HomePage() {
           <Link href="/sample">Try the AI demo</Link>
         </Button>
         <Button asChild size="lg" variant="outline">
+          <Link href="/settings">Settings</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline">
           <Link href="/admin">Admin</Link>
         </Button>
       </div>
