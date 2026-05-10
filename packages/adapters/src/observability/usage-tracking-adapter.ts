@@ -8,6 +8,7 @@ import type {
   StreamTextInput,
   TokenUsage,
 } from "@template/domain";
+import { defaultModelFor } from "../ai/providers";
 
 interface ModelRates {
   prompt: number;
@@ -49,7 +50,7 @@ const record = (
   input: { purpose: string; userId?: string | null; conversationId?: string | null; model?: string; provider: ProviderName },
   usage: TokenUsage,
 ): void => {
-  const model = input.model ?? "";
+  const model = input.model ?? defaultModelFor(input.provider);
   void repo.create({
     userId: input.userId ?? null,
     conversationId: input.conversationId ?? null,
