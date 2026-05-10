@@ -1,8 +1,8 @@
 {
   "name": "@template/adapters",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.3.0",
   "type": "module",
+  "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
@@ -20,8 +20,82 @@
     "./health": "./src/health/index.ts",
     "./telemetry": "./src/telemetry/index.ts"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public",
+    "main": "./dist/index.cjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs",
+        "types": "./dist/index.d.ts"
+      },
+      "./db": {
+        "import": "./dist/db.js",
+        "require": "./dist/db.cjs",
+        "types": "./dist/db.d.ts"
+      },
+      "./db/schema": {
+        "import": "./dist/db/schema.js",
+        "require": "./dist/db/schema.cjs",
+        "types": "./dist/db/schema.d.ts"
+      },
+      "./ai": {
+        "import": "./dist/ai.js",
+        "require": "./dist/ai.cjs",
+        "types": "./dist/ai.d.ts"
+      },
+      "./agents": {
+        "import": "./dist/agents.js",
+        "require": "./dist/agents.cjs",
+        "types": "./dist/agents.d.ts"
+      },
+      "./auth": {
+        "import": "./dist/auth.js",
+        "require": "./dist/auth.cjs",
+        "types": "./dist/auth.d.ts"
+      },
+      "./repositories": {
+        "import": "./dist/repositories.js",
+        "require": "./dist/repositories.cjs",
+        "types": "./dist/repositories.d.ts"
+      },
+      "./errors": {
+        "import": "./dist/errors.js",
+        "require": "./dist/errors.cjs",
+        "types": "./dist/errors.d.ts"
+      },
+      "./observability": {
+        "import": "./dist/observability.js",
+        "require": "./dist/observability.cjs",
+        "types": "./dist/observability.d.ts"
+      },
+      "./logging": {
+        "import": "./dist/logging.js",
+        "require": "./dist/logging.cjs",
+        "types": "./dist/logging.d.ts"
+      },
+      "./audit": {
+        "import": "./dist/audit.js",
+        "require": "./dist/audit.cjs",
+        "types": "./dist/audit.d.ts"
+      },
+      "./health": {
+        "import": "./dist/health.js",
+        "require": "./dist/health.cjs",
+        "types": "./dist/health.d.ts"
+      },
+      "./telemetry": {
+        "import": "./dist/telemetry.js",
+        "require": "./dist/telemetry.cjs",
+        "types": "./dist/telemetry.d.ts"
+      }
+    }
+  },
+  "files": ["dist", "src"],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src --ext .ts",
     "test": "vitest run --passWithNoTests",
@@ -31,6 +105,69 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@template/domain": "workspace:*",
+    "@template/shared": "workspace:*"
+  },
+  "peerDependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/mistral": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.2.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/instrumentation-express": "^0.47.0",
+    "@opentelemetry/instrumentation-http": "^0.57.0",
+    "@opentelemetry/instrumentation-pg": "^0.47.0",
+    "@opentelemetry/resources": "^1.30.0",
+    "@opentelemetry/sdk-node": "^0.57.0",
+    "@opentelemetry/sdk-trace-node": "^1.30.0",
+    "@opentelemetry/semantic-conventions": "^1.32.0",
+    "@template/domain": ">=0.3.0",
+    "@template/shared": ">=0.3.0",
+    "ai": "^4.0.0",
+    "better-auth": "^1.0.0",
+    "drizzle-orm": "^0.36.0",
+    "ioredis": "^5.4.0",
+    "langfuse": "^3.30.0",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "postgres": "^3.4.0",
+    "zod": "^3.23.0"
+  },
+  "peerDependenciesMeta": {
+    "langfuse": {
+      "optional": true
+    },
+    "pino-pretty": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-trace-otlp-http": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-express": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-http": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-pg": {
+      "optional": true
+    },
+    "@opentelemetry/resources": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-node": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-trace-node": {
+      "optional": true
+    },
+    "@opentelemetry/semantic-conventions": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/mistral": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
@@ -45,22 +182,19 @@
     "@opentelemetry/sdk-node": "^0.57.0",
     "@opentelemetry/sdk-trace-node": "^1.30.0",
     "@opentelemetry/semantic-conventions": "^1.32.0",
-    "@template/domain": "workspace:*",
-    "@template/shared": "workspace:*",
+    "@types/pg": "^8.11.10",
     "ai": "^4.0.0",
     "better-auth": "^1.0.0",
+    "drizzle-kit": "^0.28.0",
     "drizzle-orm": "^0.36.0",
     "ioredis": "^5.4.1",
     "langfuse": "^3.30.0",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
     "postgres": "^3.4.5",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/pg": "^8.11.10",
-    "drizzle-kit": "^0.28.0",
+    "tsup": "^8.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "zod": "^3.23.8"
   }
 }

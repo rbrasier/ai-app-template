@@ -62,7 +62,7 @@ const build = () => {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     adminSeedEmail: env.ADMIN_SEED_EMAIL,
-    sendMagicLink: async ({ email, url }) => {
+    sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
       logger.info(`[auth] magic link for ${email}: ${url}`);
     },
   });

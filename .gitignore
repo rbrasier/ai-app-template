@@ -36,3 +36,8 @@ Thumbs.db
 
 # Drizzle
 drizzle/meta
+
+# Template version tracking — these must be committed, not ignored
+# .template-version and .framework-scope are intentionally tracked in git
+!.template-version
+!.framework-scope

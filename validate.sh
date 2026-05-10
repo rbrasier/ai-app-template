@@ -177,6 +177,65 @@ else
   warn "AI provider key not set for '$AI_PROVIDER' (set ${KEY_VAR:-ANTHROPIC_API_KEY} to suppress)"
 fi
 
+# ── 11. publishable packages ──────────────────────────────────────────────────
+section "11. publishable packages have no 'private: true'"
+PUBLISHED_PKGS=(
+  "packages/domain/package.json"
+  "packages/shared/package.json"
+  "packages/application/package.json"
+  "packages/adapters/package.json"
+)
+PUB_VIOLATIONS=""
+for pkg in "${PUBLISHED_PKGS[@]}"; do
+  if [ -f "$pkg" ]; then
+    if node -e "const p = require('./${pkg}'); if (p.private) process.exit(1)" 2>/dev/null; then
+      : # not private — good
+    else
+      PUB_VIOLATIONS+="  $pkg has private: true\n"
+    fi
+  fi
+done
+if [ -z "$PUB_VIOLATIONS" ]; then
+  pass "published packages are not marked private"
+else
+  fail "publishable packages should not have private: true:"
+  printf '%b' "$PUB_VIOLATIONS"
+fi
+
+# Verify each published package has a publishConfig.registry set
+for pkg in "${PUBLISHED_PKGS[@]}"; do
+  if [ -f "$pkg" ]; then
+    pkg_name=$(node -e "process.stdout.write(require('./${pkg}').name)")
+    has_registry=$(node -e "const p = require('./${pkg}'); process.stdout.write(p.publishConfig?.registry ? 'yes' : 'no')" 2>/dev/null)
+    if [ "$has_registry" = "yes" ]; then
+      pass "publishConfig.registry set in $pkg_name"
+    else
+      fail "publishConfig.registry missing in $pkg_name"
+    fi
+  fi
+done
+
+# ── 12. adapters peer dependency ranges are valid semver ─────────────────────
+section "12. adapters peer dependency versions are valid semver ranges"
+if command -v node &>/dev/null && [ -f "packages/adapters/package.json" ]; then
+  BAD_PEERS=$(node -e "
+    const pkg = require('./packages/adapters/package.json');
+    const peers = pkg.peerDependencies || {};
+    // Valid forms: ^1.0.0  ~1.0.0  >=1.0.0  <=1.0.0  >1.0.0  <1.0.0  1.0.0  *  workspace:*
+    const semver = /^(\*|workspace:\*|[~^]?\d+\.\d+\.\d+|[<>]=?\d+\.\d+\.\d+)/;
+    const bad = Object.entries(peers)
+      .filter(([, v]) => !semver.test(String(v)))
+      .map(([k, v]) => k + ': ' + v);
+    if (bad.length) process.stdout.write(bad.join('\n'));
+  " 2>/dev/null)
+  if [ -z "$BAD_PEERS" ]; then
+    pass "adapters peer dependency versions are valid"
+  else
+    fail "adapters has invalid peer dependency version ranges:"
+    echo "$BAD_PEERS"
+  fi
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"
