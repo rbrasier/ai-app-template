@@ -24,6 +24,16 @@ export default function AdminIndexPage() {
           </CardContent>
         </Card>
       </Link>
+      <Link href="/admin/settings">
+        <Card className="transition-shadow hover:shadow-md">
+          <CardHeader>
+            <CardTitle>Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Configure AI provider, email, and global application behaviour.
+          </CardContent>
+        </Card>
+      </Link>
     </div>
   );
 }
