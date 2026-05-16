@@ -137,6 +137,24 @@ case "${AI_CHOICE:-1}" in
   *) AI_PROVIDER="anthropic" ;;
 esac
 
+# Auth method
+echo
+echo "  Authentication method:"
+echo "    1) magic-link         (email magic link — no password)"
+echo "    2) pki                (client certificate via reverse proxy)"
+echo "    3) pki-and-magic-link (PKI primary, magic link fallback)"
+echo "    4) google-oauth       (Google OAuth — requires additional setup)"
+echo "    5) other              (configure manually)"
+prompt "Choice [1]: "
+read -r AUTH_CHOICE
+case "${AUTH_CHOICE:-1}" in
+  2) AUTH_METHOD="pki" ;;
+  3) AUTH_METHOD="pki-and-magic-link" ;;
+  4) AUTH_METHOD="google-oauth" ;;
+  5) AUTH_METHOD="other" ;;
+  *) AUTH_METHOD="magic-link" ;;
+esac
+
 # Langfuse
 echo
 prompt "Enable Langfuse observability? [y/N]: "
@@ -155,6 +173,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Project name   : $PROJECT_NAME"
 echo "  Package scope  : $PKG_SCOPE"
 echo "  AI provider    : $AI_PROVIDER"
+echo "  Auth method    : $AUTH_METHOD"
 echo "  Langfuse       : $LANGFUSE_ENABLED"
 echo
 prompt "Proceed? [y/N]: "
@@ -191,6 +210,23 @@ fi
 info "Setting default AI provider to ${AI_PROVIDER}…"
 replace_in_files 'AI_DEFAULT_PROVIDER=anthropic' "AI_DEFAULT_PROVIDER=${AI_PROVIDER}" \
   "*.example" "*.env"
+
+info "Setting auth method to ${AUTH_METHOD}…"
+replace_in_files 'AUTH_METHOD=magic-link' "AUTH_METHOD=${AUTH_METHOD}" "*.example" "*.env"
+
+# PKI: comment out PKI vars when not using PKI so they don't confuse operators
+if [[ "$AUTH_METHOD" != "pki" && "$AUTH_METHOD" != "pki-and-magic-link" ]]; then
+  if [ -f .env.example ]; then
+    sed_inplace "s|^PKI_|# PKI_|g" .env.example
+  fi
+else
+  warning "PKI auth selected — set PKI_TRUSTED_PROXY_IPS in .env to the IP(s) of your reverse proxy."
+fi
+
+# Google OAuth: warn and comment magic-link vars
+if [ "$AUTH_METHOD" = "google-oauth" ]; then
+  warning "google-oauth requires additional setup. See docs/guides/google-oauth.md (not yet written)."
+fi
 
 # Langfuse: comment out keys if disabled (they're present as no-ops by default)
 if [ "$LANGFUSE_ENABLED" = "n" ]; then
@@ -252,6 +288,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo
 echo "  Next steps:"
 echo "    1. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)"
+if [[ "$AUTH_METHOD" == "pki" || "$AUTH_METHOD" == "pki-and-magic-link" ]]; then
+echo "    ★  Set PKI_TRUSTED_PROXY_IPS in .env to your reverse proxy's IP(s)"
+fi
 echo "    2. Start infrastructure:   docker compose up -d"
 echo "    3. Start the app:          ./restart.sh"
 echo "    4. Open the app:           http://localhost:3000"

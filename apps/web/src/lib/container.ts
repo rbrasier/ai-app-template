@@ -30,11 +30,13 @@ import {
   LangGraphAgentRunner,
   LanguageModelAdapter,
   PinoLogger,
+  PkiCertAdapter,
   createAuth,
   createDatabase,
   resolveSession,
   withOptionalLangfuse,
   withUsageTracking,
+  type AuthMethod,
 } from "@template/adapters";
 import { serverEnv } from "./env";
 
@@ -58,19 +60,49 @@ const build = () => {
   const llm = withOptionalLangfuse(withUsageTracking(baseLlm, usageRepo), env);
   const agent = new LangGraphAgentRunner(llm);
 
+  const pkiConfig = {
+    trustedProxyIps: (env.PKI_TRUSTED_PROXY_IPS ?? "")
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean),
+    sessionTtlHours: env.PKI_SESSION_TTL_HOURS,
+  };
+
+  const authMethod: AuthMethod = (() => {
+    const sendMagicLink = async ({ email, url }: { email: string; url: string }) => {
+      logger.info(`[auth] magic link for ${email}: ${url}`);
+    };
+    switch (env.AUTH_METHOD) {
+      case "pki":
+        return { type: "pki" as const, pkiConfig };
+      case "pki-and-magic-link":
+        return { type: "pki-and-magic-link" as const, pkiConfig, sendMagicLink };
+      case "google-oauth":
+        return { type: "google-oauth" as const };
+      case "other":
+        return { type: "other" as const };
+      default:
+        return { type: "magic-link" as const, sendMagicLink };
+    }
+  })();
+
+  const pkiCertAdapter =
+    env.AUTH_METHOD === "pki" || env.AUTH_METHOD === "pki-and-magic-link"
+      ? new PkiCertAdapter(db, users, pkiConfig)
+      : null;
+
   const auth = createAuth(db, {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     adminSeedEmail: env.ADMIN_SEED_EMAIL,
-    sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
-      logger.info(`[auth] magic link for ${email}: ${url}`);
-    },
+    authMethod,
   });
 
   return {
     env,
     db,
     auth,
+    pkiCertAdapter,
     logger,
     resolveSession: (token: string) => resolveSession(db, token),
     services: { llm, agent, errorLogger, auditLogger },
