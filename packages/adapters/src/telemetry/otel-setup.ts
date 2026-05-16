@@ -2,7 +2,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import {
   BatchSpanProcessor,
@@ -36,7 +36,7 @@ export const setupTelemetry = (config: TelemetryConfig = {}): void => {
   if (spanProcessors.length === 0) return;
 
   sdk = new NodeSDK({
-    resource: new Resource({ [ATTR_SERVICE_NAME]: serviceName }),
+    resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: serviceName }),
     spanProcessors,
     instrumentations: [
       new HttpInstrumentation(),
