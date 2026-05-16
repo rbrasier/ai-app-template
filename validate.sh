@@ -236,6 +236,40 @@ if command -v node &>/dev/null && [ -f "packages/adapters/package.json" ]; then
   fi
 fi
 
+# ── 13. dependency security audit ────────────────────────────────────────────
+section "13. pnpm audit (high + critical vulnerabilities)"
+if pnpm audit --audit-level=high 2>&1; then
+  pass "no high/critical vulnerabilities"
+else
+  fail "high or critical vulnerabilities found — run 'pnpm audit' for details"
+fi
+
+# ── 14. test files exist in domain and application ────────────────────────────
+section "14. domain and application packages have tests"
+DOMAIN_TESTS=$(find packages/domain/src -name "*.test.ts" 2>/dev/null | wc -l | tr -d ' ')
+APP_TESTS=$(find packages/application/src -name "*.test.ts" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$DOMAIN_TESTS" -ge 1 ]; then
+  pass "packages/domain has $DOMAIN_TESTS test file(s)"
+else
+  fail "packages/domain has no test files — write tests before shipping"
+fi
+if [ "$APP_TESTS" -ge 1 ]; then
+  pass "packages/application has $APP_TESTS test file(s)"
+else
+  fail "packages/application has no test files — write tests before shipping"
+fi
+
+# ── 15. test coverage meets thresholds (domain + application) ─────────────────
+section "15. test coverage thresholds (domain + application)"
+DOMAIN_PKG=$(node -e "process.stdout.write(require('./packages/domain/package.json').name)")
+APP_PKG=$(node -e "process.stdout.write(require('./packages/application/package.json').name)")
+if pnpm --filter "$DOMAIN_PKG" -s test:coverage && \
+   pnpm --filter "$APP_PKG" -s test:coverage; then
+  pass "coverage meets thresholds"
+else
+  fail "coverage below thresholds — see output above (targets: 70% lines, 70% functions)"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"
