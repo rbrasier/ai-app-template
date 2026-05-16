@@ -1,6 +1,7 @@
 {
   "name": "@template/shared",
   "version": "0.3.0",
+  "private": true,
   "type": "module",
   "description": "Framework shared Zod schemas for input validation at application boundaries.",
   "main": "./src/index.ts",
