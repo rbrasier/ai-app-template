@@ -13,6 +13,11 @@ const serverEnvSchema = z.object({
   LANGFUSE_PUBLIC_KEY: z.string().optional(),
   LANGFUSE_SECRET_KEY: z.string().optional(),
   LANGFUSE_HOST: z.string().url().optional(),
+  AUTH_METHOD: z
+    .enum(["magic-link", "pki", "pki-and-magic-link", "google-oauth", "other"])
+    .default("magic-link"),
+  PKI_TRUSTED_PROXY_IPS: z.string().optional(),
+  PKI_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(8),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

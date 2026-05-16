@@ -6,6 +6,8 @@ export const core_users = pgTable("core_users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   is_admin: boolean("is_admin").notNull().default(false),
+  cert_fingerprint: text("cert_fingerprint"),
+  cert_subject_dn: text("cert_subject_dn"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
