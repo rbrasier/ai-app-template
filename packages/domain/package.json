@@ -1,6 +1,7 @@
 {
   "name": "@template/domain",
   "version": "0.3.0",
+  "private": true,
   "type": "module",
   "description": "Framework core — entities, port interfaces, Result type, DomainError. Zero external dependencies.",
   "main": "./src/index.ts",
