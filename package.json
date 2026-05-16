@@ -23,6 +23,11 @@
     "init": "./scripts/init-project.sh",
     "framework:update": "./scripts/update-framework.sh"
   },
+  "pnpm": {
+    "overrides": {
+      "langsmith": ">=0.6.0"
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",

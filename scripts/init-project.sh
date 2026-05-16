@@ -206,6 +206,15 @@ fi
 info "Resetting git history…"
 rm -rf .git
 git init -q
+
+info "Installing pre-commit hook (validate.sh)…"
+mkdir -p .git/hooks
+cat > .git/hooks/pre-commit << 'HOOK'
+#!/bin/sh
+./validate.sh
+HOOK
+chmod +x .git/hooks/pre-commit
+
 git add .
 git commit -q -m "chore: initial commit from ai-app-template"
 
