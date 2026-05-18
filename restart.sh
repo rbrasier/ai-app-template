@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# restart.sh — kill dev ports, run pending migrations, start all services via Turbo.
+# restart.sh — install deps, start infrastructure, run migrations, start all services.
 
 set -euo pipefail
 
@@ -23,6 +23,58 @@ done
 echo "→ installing dependencies"
 pnpm install
 
+# ── start infrastructure ──────────────────────────────────────────────────────
+# Read the DB setup mode written by create-ai-app-template, or fall back to
+# docker if docker-compose.yml exists (handles manually-created projects).
+DBSETUP="local"
+if [ -f .dbsetup ]; then
+  DBSETUP=$(cat .dbsetup)
+fi
+
+if [ "$DBSETUP" = "docker" ] && [ -f docker-compose.yml ]; then
+  echo "→ starting Docker services"
+  docker compose up -d
+
+  echo "→ waiting for PostgreSQL to accept connections"
+  if [ -f .env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+  fi
+  DB_HOST=$(node -e "
+    const u = process.env.DATABASE_URL || '';
+    const m = u.match(/\/\/[^:@]*(?::[^@]*)?@([^:/]+)/);
+    process.stdout.write(m ? m[1] : 'localhost');
+  ")
+  DB_PORT=$(node -e "
+    const u = process.env.DATABASE_URL || '';
+    const m = u.match(/:(\d+)\//);
+    process.stdout.write(m ? m[1] : '5432');
+  ")
+  for i in $(seq 1 30); do
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+      echo "  PostgreSQL is ready"
+      break
+    fi
+    # fallback: TCP check when pg_isready is unavailable
+    if node -e "
+      const net = require('net');
+      const s = net.createConnection($DB_PORT, '$DB_HOST');
+      s.on('connect', () => { s.destroy(); process.exit(0); });
+      s.on('error', () => process.exit(1));
+    " 2>/dev/null; then
+      echo "  PostgreSQL is ready"
+      break
+    fi
+    if [ "$i" -eq 30 ]; then
+      echo "  timed out waiting for PostgreSQL — check docker compose logs"
+      exit 1
+    fi
+    sleep 1
+  done
+fi
+
 echo "→ running pending migrations"
 if [ -f .env ]; then
   set -a
@@ -32,7 +84,7 @@ if [ -f .env ]; then
 fi
 ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
 pnpm --filter "$ADAPTERS_PKG" db:migrate || {
-  echo "  migration failed — fix DATABASE_URL or run 'docker compose up -d postgres' first"
+  echo "  migration failed — check DATABASE_URL in .env"
   exit 1
 }
 
