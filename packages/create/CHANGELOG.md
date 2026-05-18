@@ -1,5 +1,11 @@
 # create-ai-app-template
 
+## 0.4.2
+
+### Patch Changes
+
+- a67c8a1: Fix for empty folder check
+
 ## 0.4.1
 
 ### Patch Changes
