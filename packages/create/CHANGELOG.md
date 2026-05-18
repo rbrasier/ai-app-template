@@ -1,5 +1,11 @@
 # create-ai-app-template
 
+## 0.4.3
+
+### Patch Changes
+
+- bd560c9: Deployment
+
 ## 0.4.2
 
 ### Patch Changes
