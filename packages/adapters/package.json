@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/adapters",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
   "main": "./src/index.ts",
@@ -126,8 +126,8 @@
     "@opentelemetry/sdk-node": "^0.57.0",
     "@opentelemetry/sdk-trace-node": "^1.30.0",
     "@opentelemetry/semantic-conventions": "^1.32.0",
-    "@rbrasier/domain": ">=0.3.0",
-    "@rbrasier/shared": ">=0.3.0",
+    "@rbrasier/domain": ">=1.0.0",
+    "@rbrasier/shared": ">=1.0.0",
     "ai": "^4.0.0",
     "better-auth": "^1.0.0",
     "drizzle-orm": "^0.45.2",
