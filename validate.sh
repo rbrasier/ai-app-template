@@ -293,6 +293,37 @@ else
   fail "coverage below thresholds — see output above (targets: 70% lines, 70% functions)"
 fi
 
+# ── 16. restart.sh adapters package resolution ───────────────────────────────
+section "16. restart.sh resolves adapters package name in scaffolded context"
+# A scaffolded project has no packages/ directory — the adapters package is
+# consumed as a versioned npm dependency. restart.sh must guard the
+# packages/adapters/package.json read with a file-existence check and fall back
+# to .framework-scope when the local source tree is absent.
+if grep -q "if \[ -f packages/adapters/package.json \]" restart.sh; then
+  pass "restart.sh guards adapters package resolution for scaffolded projects"
+else
+  fail "restart.sh reads packages/adapters/package.json unconditionally — breaks scaffolded projects (no packages/ dir present after scaffold)"
+fi
+
+# ── 17. @opentelemetry/* must be dependencies, not peerDependencies ──────────
+section "17. @opentelemetry/* packages are dependencies (not peerDependencies) in adapters"
+# OTel packages are external in tsup (not bundled) but are implementation details
+# of adapters that consuming apps never import directly. They must be in
+# dependencies so pnpm installs them when @rbrasier/adapters is consumed as an
+# npm package. Declaring them as peerDependencies silently breaks scaffolded
+# projects because apps/api never lists them.
+OTEL_IN_PEERS=$(node -e "
+  const pkg = require('./packages/adapters/package.json');
+  const peers = Object.keys(pkg.peerDependencies || {});
+  const bad = peers.filter(p => p.startsWith('@opentelemetry/'));
+  if (bad.length) process.stdout.write(bad.join(', '));
+" 2>/dev/null)
+if [ -z "$OTEL_IN_PEERS" ]; then
+  pass "@opentelemetry/* packages are not in adapters peerDependencies"
+else
+  fail "@opentelemetry/* packages declared as peerDependencies in adapters — must be dependencies: $OTEL_IN_PEERS"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"

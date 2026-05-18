@@ -24,7 +24,7 @@ import {
   patchEnvContent,
 } from "./helpers.js";
 
-const TEMPLATE_REPO = "https://github.com/rbrasier/ai-app-template";
+const TEMPLATE_REPO = process.env.TEMPLATE_REPO_OVERRIDE ?? "https://github.com/rbrasier/ai-app-template";
 const FRAMEWORK_SCOPE = "@rbrasier";
 const FRAMEWORK_PKGS = ["domain", "shared", "application", "adapters"] as const;
 
@@ -245,7 +245,12 @@ async function scaffold(opts: ScaffoldOptions) {
   rmSync(join(targetDir, ".git"), { recursive: true, force: true });
 
   // ── read framework version before we remove packages/ ─────────────────────
-  const frameworkVersion = readFileSync(join(targetDir, "VERSION"), "utf8").trim();
+  // Use the adapters package.json version — that is the version actually published
+  // to npm. VERSION tracks template history and can differ from the published
+  // package versions between releases.
+  const frameworkVersion = JSON.parse(
+    readFileSync(join(targetDir, "packages", "adapters", "package.json"), "utf8"),
+  ).version as string;
 
   // ── remove the framework source packages (they become npm deps) ───────────
   console.log(pc.green("  Removing framework source packages…"));
@@ -333,7 +338,7 @@ async function scaffold(opts: ScaffoldOptions) {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log();
   console.log("  Start the app:");
-  console.log(pc.cyan("    ./restart.sh"));
+  console.log(pc.cyan(`    ${targetDir}/restart.sh`));
   console.log();
   if (!aiProviderKey) {
     console.log(pc.yellow(`  ! Add your ${AI_KEY_NAMES[aiProvider]} to .env before starting.`));

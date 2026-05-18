@@ -82,7 +82,15 @@ if [ -f .env ]; then
   source .env
   set +a
 fi
-ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
+# packages/adapters/package.json exists in the template repo but is removed when
+# a project is scaffolded (the package becomes a versioned npm dependency).
+# Fall back to .framework-scope written by create-ai-app-template.
+if [ -f packages/adapters/package.json ]; then
+  ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
+else
+  FRAMEWORK_SCOPE=$(cat .framework-scope 2>/dev/null || echo "@rbrasier")
+  ADAPTERS_PKG="${FRAMEWORK_SCOPE}/adapters"
+fi
 pnpm --filter "$ADAPTERS_PKG" db:migrate || {
   echo "  migration failed — check DATABASE_URL in .env"
   exit 1
