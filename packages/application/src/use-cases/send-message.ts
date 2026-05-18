@@ -4,8 +4,8 @@ import {
   type Result,
   domainError,
   err,
-} from "@template/domain";
-import { sampleResponseSchema, type SampleResponse } from "@template/shared";
+} from "@rbrasier/domain";
+import { sampleResponseSchema, type SampleResponse } from "@rbrasier/shared";
 
 export interface SendMessageInput {
   readonly prompt: string;

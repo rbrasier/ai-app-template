@@ -7,11 +7,11 @@ coordinate version bumps and changelog generation across all published packages.
 
 | Package | Scope | Registry |
 |---|---|---|
-| `@template/domain` | Framework core | GitHub Packages |
-| `@template/shared` | Zod schemas | GitHub Packages |
-| `@template/application` | Use cases | GitHub Packages |
-| `@template/adapters` | Concrete implementations | GitHub Packages |
-| `@template/create` | Scaffold CLI | GitHub Packages |
+| `@rbrasier/domain` | Framework core | GitHub Packages |
+| `@rbrasier/shared` | Zod schemas | GitHub Packages |
+| `@rbrasier/application` | Use cases | GitHub Packages |
+| `@rbrasier/adapters` | Concrete implementations | GitHub Packages |
+| `@rbrasier/create` | Scaffold CLI | GitHub Packages |
 
 ## Step-by-step release workflow
 

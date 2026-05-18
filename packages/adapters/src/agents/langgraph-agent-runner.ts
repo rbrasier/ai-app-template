@@ -8,7 +8,7 @@ import {
   type IAgentRunner,
   type ILanguageModel,
   type Result,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { END, START, StateGraph, Annotation } from "@langchain/langgraph";
 
 const AgentState = Annotation.Root({

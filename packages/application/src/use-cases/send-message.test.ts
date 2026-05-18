@@ -12,8 +12,8 @@ import {
   domainError,
   err,
   ok,
-} from "@template/domain";
-import { sampleResponseSchema, type SampleResponse } from "@template/shared";
+} from "@rbrasier/domain";
+import { sampleResponseSchema, type SampleResponse } from "@rbrasier/shared";
 import { SendMessage } from "./send-message";
 
 const ZERO_USAGE: TokenUsage = {

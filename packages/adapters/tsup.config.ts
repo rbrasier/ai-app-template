@@ -22,8 +22,8 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   external: [
-    "@template/domain",
-    "@template/shared",
+    "@rbrasier/domain",
+    "@rbrasier/shared",
     "drizzle-orm",
     "better-auth",
     "ai",

@@ -2,7 +2,7 @@ import {
   listErrorsInputSchema,
   logErrorInputSchema,
   updateErrorStatusInputSchema,
-} from "@template/shared";
+} from "@rbrasier/shared";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, publicProcedure, router } from "../trpc";
 

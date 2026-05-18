@@ -1,4 +1,4 @@
-import { type IUserRepository, type Result, type User } from "@template/domain";
+import { type IUserRepository, type Result, type User } from "@rbrasier/domain";
 
 export class ListUsers {
   constructor(private readonly users: IUserRepository) {}

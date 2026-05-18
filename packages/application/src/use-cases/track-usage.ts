@@ -4,7 +4,7 @@ import type {
   Result,
   UsageFilter,
   UsageSummary,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 export class TrackUsage {
   constructor(private readonly repo: IUsageRepository) {}

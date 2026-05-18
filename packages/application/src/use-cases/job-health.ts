@@ -1,4 +1,4 @@
-import type { IJobRepository, Job, Result } from "@template/domain";
+import type { IJobRepository, Job, Result } from "@rbrasier/domain";
 
 export class RegisterJob {
   constructor(private readonly repo: IJobRepository) {}

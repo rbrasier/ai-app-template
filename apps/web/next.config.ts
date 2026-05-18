@@ -4,10 +4,10 @@ const config: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   transpilePackages: [
-    "@template/domain",
-    "@template/application",
-    "@template/adapters",
-    "@template/shared",
+    "@rbrasier/domain",
+    "@rbrasier/application",
+    "@rbrasier/adapters",
+    "@rbrasier/shared",
   ],
   serverExternalPackages: [
     "pino",

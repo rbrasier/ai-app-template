@@ -9,7 +9,7 @@ import {
   type StreamObjectInput,
   type StreamTextInput,
   type TokenUsage,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { generateObject, streamObject, streamText } from "ai";
 import { resolveModel } from "./providers";
 

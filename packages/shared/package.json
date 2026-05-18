@@ -1,6 +1,5 @@
 {
-  "name": "@template/shared",
-  "private": true,
+  "name": "@rbrasier/shared",
   "version": "0.3.0",
   "type": "module",
   "description": "Framework shared Zod schemas for input validation at application boundaries.",

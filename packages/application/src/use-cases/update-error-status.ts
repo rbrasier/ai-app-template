@@ -5,7 +5,7 @@ import {
   type Result,
   domainError,
   err,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 export class UpdateErrorStatus {
   constructor(private readonly repo: IErrorLogRepository) {}

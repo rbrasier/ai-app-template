@@ -1,6 +1,6 @@
 "use client";
 
-import type { ErrorLogStatus } from "@template/domain";
+import type { ErrorLogStatus } from "@rbrasier/domain";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

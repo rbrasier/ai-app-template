@@ -4,7 +4,7 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["@template/domain", "@template/shared", "@template/application", "@template/adapters"]
+    ["@rbrasier/domain", "@rbrasier/shared", "@rbrasier/application", "@rbrasier/adapters"]
   ],
   "access": "public",
   "baseBranch": "main",

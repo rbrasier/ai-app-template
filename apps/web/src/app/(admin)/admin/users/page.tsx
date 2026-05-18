@@ -1,6 +1,6 @@
 "use client";
 
-import type { User } from "@template/domain";
+import type { User } from "@rbrasier/domain";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -499,7 +499,7 @@ Then:
 
 - Remove `"private": true` from `packages/domain`, `packages/shared`, `packages/application`, `packages/adapters`
 - Add `"publishConfig": { "registry": "https://npm.pkg.github.com", "access": "public" }`
-- Rename packages from `@template/*` to `@your-org/*` (placeholder — user provides org name at scaffold time)
+- Rename packages from `@rbrasier/*` to `@your-org/*` (placeholder — user provides org name at scaffold time)
 
 ### Step 3 — Convert framework deps in adapters to peer deps
 
@@ -548,7 +548,7 @@ Configure `.changeset/config.json`:
 New `packages/create/` package published as `@your-org/create`. Contains:
 - `src/index.ts` — interactive prompts (clack or inquirer)
 - `templates/` — the scaffold files (domain stub, application stub, app shells)
-- Replaces all `@template/` occurrences with `@project-name/`
+- Replaces all `@rbrasier/` occurrences with `@project-name/`
 - Installs `@your-org/*` from registry
 
 ### Step 8 — Implement eject command
@@ -563,7 +563,7 @@ Add checks:
 - Published packages have no `private: true`
 - `dist/` exists for each published package (built)
 - Peer dependency versions in `adapters` are valid ranges
-- `@template/` scope is zero in published packages (only `@your-org/`)
+- `@rbrasier/` scope is zero in published packages (only `@your-org/`)
 
 ### Step 10 — Documentation
 
@@ -579,7 +579,7 @@ Add checks:
 This is a MINOR bump: `0.2.0 → 0.3.0`.
 
 No breaking changes to the domain model or existing use cases. The internal
-`@template/*` scope changes to `@your-org/*` but that is a scaffold-level rename,
+`@rbrasier/*` scope changes to `@your-org/*` but that is a scaffold-level rename,
 not an API break. Downstream projects generated after this phase will use the
 published packages. Existing projects remain on the old internal structure
 until they opt in.

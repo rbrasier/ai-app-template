@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # scripts/init-project.sh — bootstrap a new project from this template.
-# Run once from the repo root after cloning. Renames all @template/ references,
-# resets git history, and installs dependencies.
+# Run once from the repo root after cloning. Renames app-level packages,
+# wires @rbrasier/* as versioned npm deps, removes framework source,
+# and resets git history.
 
 set -euo pipefail
 
@@ -9,7 +10,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 # ── guard: already initialised ───────────────────────────────────────────────
-if ! grep -q '@template/' packages/domain/package.json 2>/dev/null; then
+if [ -f .framework-scope ]; then
   echo "Already initialised — nothing to do."
   exit 0
 fi
@@ -31,9 +32,12 @@ echo "  ai-app-template — Project Initialisation"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
 
+FRAMEWORK_SCOPE="@rbrasier"
+FRAMEWORK_VERSION=$(tr -d '[:space:]' < VERSION)
+FRAMEWORK_PKGS=("domain" "shared" "application" "adapters")
+
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-# Portable sed -i (GNU uses -i'' with no space; BSD needs -i '')
 sed_inplace() {
   local pattern="$1"
   local file="$2"
@@ -44,37 +48,6 @@ sed_inplace() {
     rm -f "${file}.bak"
   fi
 }
-
-# Apply a sed pattern to every file matching given extensions that contains
-# the search string (avoids touching binary files or unrelated files).
-replace_in_files() {
-  local search="$1"
-  local replacement="$2"
-  shift 2
-  local extensions=("$@")
-
-  local include_args=()
-  for ext in "${extensions[@]}"; do
-    include_args+=(--include="$ext")
-  done
-
-  local files
-  files=$(grep -rl "$search" . "${include_args[@]}" \
-    --exclude-dir=node_modules \
-    --exclude-dir=.git \
-    --exclude-dir=dist \
-    --exclude-dir=.next \
-    --exclude-dir=.turbo \
-    2>/dev/null || true)
-
-  if [ -z "$files" ]; then return; fi
-
-  while IFS= read -r file; do
-    sed_inplace "s|${search}|${replacement}|g" "$file"
-  done <<< "$files"
-}
-
-# ── collect inputs ────────────────────────────────────────────────────────────
 
 read_input() {
   local var_name="$1"
@@ -107,20 +80,21 @@ validate_project_name() {
   return 0
 }
 
+# ── collect inputs ────────────────────────────────────────────────────────────
+
 # Project name
 while true; do
   read_input PROJECT_NAME "Project name (lowercase, hyphens only)" ""
   if validate_project_name "$PROJECT_NAME"; then break; fi
 done
 
-# Package scope
-DEFAULT_SCOPE="@${PROJECT_NAME}"
-read_input PKG_SCOPE "Package scope" "$DEFAULT_SCOPE"
+# App package scope (only for apps/web and apps/api — framework stays @rbrasier)
+DEFAULT_APP_SCOPE="@${PROJECT_NAME}"
+read_input APP_SCOPE "Package scope for your app packages" "$DEFAULT_APP_SCOPE"
 
-# Validate scope starts with @
-if [[ ! "$PKG_SCOPE" =~ ^@ ]]; then
-  PKG_SCOPE="@${PKG_SCOPE}"
-  warning "Scope must start with @, using: $PKG_SCOPE"
+if [[ ! "$APP_SCOPE" =~ ^@ ]]; then
+  APP_SCOPE="@${APP_SCOPE}"
+  warning "Scope must start with @, using: $APP_SCOPE"
 fi
 
 # AI provider
@@ -170,11 +144,13 @@ echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Summary"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Project name   : $PROJECT_NAME"
-echo "  Package scope  : $PKG_SCOPE"
-echo "  AI provider    : $AI_PROVIDER"
-echo "  Auth method    : $AUTH_METHOD"
-echo "  Langfuse       : $LANGFUSE_ENABLED"
+echo "  Project name     : $PROJECT_NAME"
+echo "  App scope        : $APP_SCOPE"
+echo "  Framework scope  : $FRAMEWORK_SCOPE (published npm packages — unchanged)"
+echo "  Framework ver    : $FRAMEWORK_VERSION"
+echo "  AI provider      : $AI_PROVIDER"
+echo "  Auth method      : $AUTH_METHOD"
+echo "  Langfuse         : $LANGFUSE_ENABLED"
 echo
 prompt "Proceed? [y/N]: "
 read -r CONFIRM
@@ -188,54 +164,78 @@ esac
 
 echo
 
-# ── find-and-replace ──────────────────────────────────────────────────────────
+# ── remove framework source packages (they become npm deps) ──────────────────
 
-info "Renaming @template/ → ${PKG_SCOPE}/ across all source files…"
-replace_in_files '@template/' "${PKG_SCOPE}/" \
-  "*.json" "*.ts" "*.tsx" "*.md" "*.sh" "*.yml" "*.yaml"
+info "Removing framework source packages (packages/ → npm deps)…"
+rm -rf packages/
 
-info "Renaming root package name…"
+# ── update pnpm-workspace.yaml to only list apps/ ────────────────────────────
+
+info "Updating pnpm-workspace.yaml…"
+cat > pnpm-workspace.yaml << 'EOF'
+packages:
+  - "apps/*"
+EOF
+
+# ── rename app-level packages to user's scope ────────────────────────────────
+
+info "Renaming @rbrasier/web and @rbrasier/api → ${APP_SCOPE}/…"
+sed_inplace "s|\"@rbrasier/web\"|\"${APP_SCOPE}/web\"|g"  apps/web/package.json
+sed_inplace "s|\"@rbrasier/api\"|\"${APP_SCOPE}/api\"|g"  apps/api/package.json
+
+# ── swap workspace:* → versioned npm ranges in apps ──────────────────────────
+
+info "Wiring framework packages as versioned npm dependencies…"
+VERSION_RANGE="^${FRAMEWORK_VERSION}"
+for pkg in "${FRAMEWORK_PKGS[@]}"; do
+  for app_pkg in apps/web/package.json apps/api/package.json; do
+    [ -f "$app_pkg" ] || continue
+    sed_inplace "s|\"${FRAMEWORK_SCOPE}/${pkg}\": \"workspace:\*\"|\"${FRAMEWORK_SCOPE}/${pkg}\": \"${VERSION_RANGE}\"|g" "$app_pkg"
+  done
+done
+
+# ── update root package.json name ────────────────────────────────────────────
+
+info "Updating root package name…"
 sed_inplace "s|\"name\": \"template\"|\"name\": \"${PROJECT_NAME}\"|g" package.json
 
-info "Updating docker-compose service names and database…"
-replace_in_files 'POSTGRES_DB=template' "POSTGRES_DB=${PROJECT_NAME}" "*.yml" "*.yaml" "*.example"
-replace_in_files 'APP_NAME=template' "APP_NAME=${PROJECT_NAME}" "*.example"
-replace_in_files '/template' "/${PROJECT_NAME}" ".env.example"
+# ── docker-compose and .env.example renames ──────────────────────────────────
 
-# docker-compose service name (top-level service keys)
+info "Updating docker-compose and .env.example…"
 if [ -f docker-compose.yml ]; then
-  sed_inplace "s|^  template:|  ${PROJECT_NAME}:|g" docker-compose.yml
+  sed_inplace "s|POSTGRES_DB=template|POSTGRES_DB=${PROJECT_NAME}|g"   docker-compose.yml
+  sed_inplace "s|^  template:|  ${PROJECT_NAME}:|g"                    docker-compose.yml
 fi
+if [ -f .env.example ]; then
+  sed_inplace "s|APP_NAME=template|APP_NAME=${PROJECT_NAME}|g"                         .env.example
+  sed_inplace "s|/template|/${PROJECT_NAME}|g"                                          .env.example
+  sed_inplace "s|AI_DEFAULT_PROVIDER=anthropic|AI_DEFAULT_PROVIDER=${AI_PROVIDER}|g"   .env.example
+  sed_inplace "s|AUTH_METHOD=magic-link|AUTH_METHOD=${AUTH_METHOD}|g"                  .env.example
 
-info "Setting default AI provider to ${AI_PROVIDER}…"
-replace_in_files 'AI_DEFAULT_PROVIDER=anthropic' "AI_DEFAULT_PROVIDER=${AI_PROVIDER}" \
-  "*.example" "*.env"
-
-info "Setting auth method to ${AUTH_METHOD}…"
-replace_in_files 'AUTH_METHOD=magic-link' "AUTH_METHOD=${AUTH_METHOD}" "*.example" "*.env"
-
-# PKI: comment out PKI vars when not using PKI so they don't confuse operators
-if [[ "$AUTH_METHOD" != "pki" && "$AUTH_METHOD" != "pki-and-magic-link" ]]; then
-  if [ -f .env.example ]; then
+  # PKI: comment out PKI vars when not using PKI
+  if [[ "$AUTH_METHOD" != "pki" && "$AUTH_METHOD" != "pki-and-magic-link" ]]; then
     sed_inplace "s|^PKI_|# PKI_|g" .env.example
+  else
+    warning "PKI auth selected — set PKI_TRUSTED_PROXY_IPS in .env to your reverse proxy's IP(s)."
   fi
-else
-  warning "PKI auth selected — set PKI_TRUSTED_PROXY_IPS in .env to the IP(s) of your reverse proxy."
-fi
 
-# Google OAuth: warn and comment magic-link vars
-if [ "$AUTH_METHOD" = "google-oauth" ]; then
-  warning "google-oauth requires additional setup. See docs/guides/google-oauth.md (not yet written)."
-fi
+  if [ "$AUTH_METHOD" = "google-oauth" ]; then
+    warning "google-oauth requires additional setup. See docs/guides/google-oauth.md."
+  fi
 
-# Langfuse: comment out keys if disabled (they're present as no-ops by default)
-if [ "$LANGFUSE_ENABLED" = "n" ]; then
-  info "Langfuse disabled — keys will be commented in .env.example…"
-  if [ -f .env.example ]; then
+  if [ "$LANGFUSE_ENABLED" = "n" ]; then
+    info "Langfuse disabled — commenting keys in .env.example…"
     sed_inplace "s|^LANGFUSE_|# LANGFUSE_|g" .env.example
   fi
-  warning "The Langfuse adapter is present but will no-op without keys set."
 fi
+
+# ── write .npmrc for @rbrasier GitHub Package Registry auth ──────────────────
+
+info "Writing .npmrc for @rbrasier registry auth…"
+cat > .npmrc << 'EOF'
+@rbrasier:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+EOF
 
 # ── reset git history ─────────────────────────────────────────────────────────
 
@@ -252,32 +252,39 @@ HOOK
 chmod +x .git/hooks/pre-commit
 
 git add .
-git commit -q -m "chore: initial commit from ai-app-template"
+git commit -q -m "chore: initial commit from ai-app-template v${FRAMEWORK_VERSION}"
 
 # ── copy env file ─────────────────────────────────────────────────────────────
 
 if [ -f .env.example ] && [ ! -f .env ]; then
   info "Copying .env.example → .env…"
   cp .env.example .env
-else
-  info ".env already exists — skipping copy."
 fi
 
 # ── write version tracking files ─────────────────────────────────────────────
 
-info "Writing .template-version…"
-tr -d '[:space:]' < VERSION > .template-version
+info "Writing .framework-scope and .template-version…"
+echo "${FRAMEWORK_SCOPE}" > .framework-scope
+echo "${FRAMEWORK_VERSION}" > .template-version
 
-info "Writing .framework-scope…"
-echo "${PKG_SCOPE}" > .framework-scope
-
-git add .template-version .framework-scope
+git add .framework-scope .template-version
 git commit -q -m "chore: add template version tracking files"
 
 # ── install dependencies ──────────────────────────────────────────────────────
 
 info "Installing dependencies (pnpm install)…"
 pnpm install
+
+# ── typecheck (light validation — no DB required) ────────────────────────────
+
+info "Running typecheck…"
+if pnpm typecheck 2>&1; then
+  info "Typecheck passed."
+else
+  echo
+  warning "TypeScript errors detected. Review above, then run './validate.sh' once"
+  warning "infrastructure is running (docker compose up -d)."
+fi
 
 # ── done ──────────────────────────────────────────────────────────────────────
 
@@ -287,14 +294,17 @@ echo -e "  ${GREEN}✓ Project \"${PROJECT_NAME}\" is ready.${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
 echo "  Next steps:"
-echo "    1. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)"
+echo "    1. Set GITHUB_TOKEN in your environment (read:packages scope)"
+echo "    2. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)"
 if [[ "$AUTH_METHOD" == "pki" || "$AUTH_METHOD" == "pki-and-magic-link" ]]; then
 echo "    ★  Set PKI_TRUSTED_PROXY_IPS in .env to your reverse proxy's IP(s)"
 fi
-echo "    2. Start infrastructure:   docker compose up -d"
-echo "    3. Start the app:          ./restart.sh"
-echo "    4. Open the app:           http://localhost:3000"
-echo "    5. Push to GitHub:         git remote add origin <url> && git push -u origin main"
+echo "    3. Start infrastructure:   docker compose up -d"
+echo "    4. pnpm run db:migrate"
+echo "    5. Start the app:          ./restart.sh"
+echo "    6. Open the app:           http://localhost:3000"
+echo "    7. Push to GitHub:         git remote add origin <url> && git push -u origin main"
 echo
+echo "  Once infrastructure is up, run ./validate.sh to confirm everything passes."
 echo "  Admin login is seeded from ADMIN_SEED_EMAIL in .env."
 echo

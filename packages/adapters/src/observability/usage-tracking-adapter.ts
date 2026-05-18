@@ -7,7 +7,7 @@ import type {
   StreamObjectInput,
   StreamTextInput,
   TokenUsage,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { defaultModelFor } from "../ai/providers";
 
 interface ModelRates {

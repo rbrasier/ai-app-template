@@ -1,4 +1,4 @@
-import type { AiStatus } from "@template/domain";
+import type { AiStatus } from "@rbrasier/domain";
 
 interface AiHealthConfig {
   readonly provider: string;

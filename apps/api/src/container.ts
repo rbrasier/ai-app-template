@@ -17,7 +17,7 @@ import {
   UpdateErrorStatus,
   UpdateUser,
   UpsertFeatureFlag,
-} from "@template/application";
+} from "@rbrasier/application";
 import {
   AiHealthChecker,
   CompositeHealthChecker,
@@ -36,7 +36,7 @@ import {
   createDatabase,
   withOptionalLangfuse,
   withUsageTracking,
-} from "@template/adapters";
+} from "@rbrasier/adapters";
 import type { Env } from "./env.js";
 
 export const buildContainer = (env: Env) => {

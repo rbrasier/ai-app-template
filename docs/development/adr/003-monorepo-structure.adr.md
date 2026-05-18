@@ -21,16 +21,16 @@ type-safety must hold without publishing internal packages to npm.
 
 ```
 apps/
-  web/        @template/web — Next.js 15, tRPC v11
-  api/        @template/api — Express, Zod
+  web/        @rbrasier/web — Next.js 15, tRPC v11
+  api/        @rbrasier/api — Express, Zod
 packages/
-  domain/         @template/domain
-  application/    @template/application
-  shared/         @template/shared
-  adapters/       @template/adapters
+  domain/         @rbrasier/domain
+  application/    @rbrasier/application
+  shared/         @rbrasier/shared
+  adapters/       @rbrasier/adapters
 ```
 
-### Why `@template/*` as the scope?
+### Why `@rbrasier/*` as the scope?
 
 `template` is the placeholder project name. The "New App / Feature Setup"
 skill in `CLAUDE.md` walks the new owner through renaming the scope to their
@@ -47,7 +47,7 @@ a built `.d.ts`, and lets `tsc -b` build the graph in dependency order.
 **Positive**
 
 - One `pnpm install` at the root resolves the whole graph.
-- `pnpm --filter @template/<x>` runs scripts per package.
+- `pnpm --filter @rbrasier/<x>` runs scripts per package.
 - Turbo caches make the typical `pnpm typecheck` near-instant after the first
   run.
 

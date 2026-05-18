@@ -22,7 +22,7 @@ find-and-replace process.
 
 1. Prompts for project name, package scope, AI provider, Langfuse enablement
 2. Shows a summary and asks for confirmation before touching any files
-3. Runs `grep -rl` + `sed -i` to replace all `@template/` occurrences in `*.json`, `*.ts`, `*.tsx`, `*.md`, `*.sh`, `*.yml`, `*.yaml`
+3. Runs `grep -rl` + `sed -i` to replace all `@rbrasier/` occurrences in `*.json`, `*.ts`, `*.tsx`, `*.md`, `*.sh`, `*.yml`, `*.yaml`
 4. Renames root package name, docker-compose service names, database name, env var defaults
 5. Resets git history with a clean initial commit
 6. Copies `.env.example` → `.env`
@@ -34,7 +34,7 @@ find-and-replace process.
 ### Known limitations
 
 - `sed -i` differences between GNU (Linux) and BSD (macOS) are handled with platform detection
-- Guard clause exits if `@template/` is no longer present in `packages/domain/package.json` (idempotent)
+- Guard clause exits if `@rbrasier/` is no longer present in `packages/domain/package.json` (idempotent)
 - Script must be executable in the repo (`chmod +x` committed)
 
 ---
@@ -61,7 +61,7 @@ can now receive ongoing framework updates via `pnpm update`.
 | `packages/adapters/tsup.config.ts` | New — multi-entry ESM+CJS+DTS build, all peer deps marked external |
 | `packages/adapters/src/factory.ts` | New — `createAdapters(db, config)` factory function |
 | `packages/adapters/src/index.ts` | Added `export * from "./factory"` |
-| `packages/create/package.json` | New package — `@template/create` scaffold CLI |
+| `packages/create/package.json` | New package — `@rbrasier/create` scaffold CLI |
 | `packages/create/tsconfig.json` | New |
 | `packages/create/src/index.ts` | New — interactive CLI using `prompts` + `picocolors` |
 | `.changeset/config.json` | New — Changesets configuration |
@@ -90,9 +90,9 @@ template's own development.
 Level 2 (swap) and Level 3 (extend) customisation patterns. Used by container.ts
 in downstream project apps.
 
-**`@template/create` CLI:** Published as an npx-runnable scaffolder. Clones the
+**`@rbrasier/create` CLI:** Published as an npx-runnable scaffolder. Clones the
 template repo, applies the same find-and-replace as `init-project.sh`, resets
-history, writes tracking files, and installs deps. Intended for `npx @template/create`.
+history, writes tracking files, and installs deps. Intended for `npx @rbrasier/create`.
 
 **Changesets linked group:** All four core packages (`domain`, `shared`,
 `application`, `adapters`) are in a linked group so they always release at the
@@ -100,9 +100,9 @@ same version number — simplifying the consumer update story.
 
 ### Known limitations
 
-- `@template/ui` (React admin component library) is deferred to a future phase.
+- `@rbrasier/ui` (React admin component library) is deferred to a future phase.
   Admin pages remain in the scaffold for now.
-- The `eject` CLI (`@template/cli eject <AdapterName>`) is deferred to a future
+- The `eject` CLI (`@rbrasier/cli eject <AdapterName>`) is deferred to a future
   phase. Manual ejection instructions are documented in `overriding-adapters.md`.
 - Org name is the `@template` placeholder in the template repo. The `init-project.sh`
   script renames it to the user's chosen scope at scaffold time.

@@ -8,7 +8,7 @@ import {
   type UsageEvent,
   type UsageFilter,
   type UsageSummary,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { and, eq, gte, lte, sum, count, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { ai_usage_events } from "../db/schema/ai";

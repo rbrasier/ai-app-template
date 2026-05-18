@@ -8,7 +8,7 @@ import {
   domainError,
   err,
   ok,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { UpdateUser } from "./update-user";
 import { DeleteUser } from "./delete-user";
 import { ListUsers } from "./list-users";

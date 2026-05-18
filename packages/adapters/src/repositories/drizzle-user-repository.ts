@@ -7,7 +7,7 @@ import {
   type Result,
   type User,
   type UserUpdate,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { core_users } from "../db/schema/core";

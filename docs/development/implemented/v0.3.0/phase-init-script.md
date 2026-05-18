@@ -44,7 +44,7 @@ to find files containing the pattern, then `sed -i` to apply.
 
 | Find | Replace with | Scope |
 |---|---|---|
-| `@template/` | `@{PKG_SCOPE}/` | All `*.json`, `*.ts`, `*.tsx`, `*.md`, `*.sh`, `*.yml`, `*.yaml` |
+| `@rbrasier/` | `@{PKG_SCOPE}/` | All `*.json`, `*.ts`, `*.tsx`, `*.md`, `*.sh`, `*.yml`, `*.yaml` |
 | `"name": "template"` | `"name": "{PROJECT_NAME}"` | Root `package.json` only |
 | `POSTGRES_DB=template` | `POSTGRES_DB={PROJECT_NAME}` | `docker-compose.yml`, `.env.example` |
 | `APP_NAME=template` | `APP_NAME={PROJECT_NAME}` | `.env.example` |
@@ -124,7 +124,7 @@ Admin login is seeded from ADMIN_SEED_EMAIL in .env.
 ## 4. Implementation notes
 
 - Use only POSIX shell (`#!/usr/bin/env bash`, `set -euo pipefail`) — no Node, no external tools beyond `sed`, `grep`, `git`, `pnpm`
-- Guard against running more than once: check if `@template/` still appears in `packages/domain/package.json`; if not, print "Already initialised — nothing to do" and exit 0
+- Guard against running more than once: check if `@rbrasier/` still appears in `packages/domain/package.json`; if not, print "Already initialised — nothing to do" and exit 0
 - `sed -i` differs between GNU sed (Linux) and BSD sed (macOS) — use `sed -i.bak` and clean up `.bak` files, or detect the platform
 - All `sed` patterns should use `|` as delimiter to avoid clashing with `/` in package scope names
 

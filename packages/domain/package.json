@@ -1,6 +1,5 @@
 {
-  "name": "@template/domain",
-  "private": true,
+  "name": "@rbrasier/domain",
   "version": "0.3.0",
   "type": "module",
   "description": "Framework core — entities, port interfaces, Result type, DomainError. Zero external dependencies.",

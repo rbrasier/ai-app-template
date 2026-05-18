@@ -59,7 +59,7 @@ apps/
 packages/
   domain/              Pure TypeScript. Entities, ports, errors.
                        ZERO external dependencies.
-  application/         Use cases. Imports only @template/domain.
+  application/         Use cases. Imports only @rbrasier/domain.
   adapters/            Drizzle, AI SDK, LangGraph, Langfuse, Better Auth.
                        Implements port interfaces.
   shared/              Zod schemas, types, utils. No business logic.

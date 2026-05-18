@@ -2,7 +2,7 @@ import {
   type ErrorLogPayload,
   type IErrorLogger,
   type Result,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 export class LogError {
   constructor(private readonly logger: IErrorLogger) {}

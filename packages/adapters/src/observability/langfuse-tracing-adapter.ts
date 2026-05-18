@@ -6,7 +6,7 @@ import type {
   StreamObjectInput,
   StreamTextInput,
   TokenUsage,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { Langfuse } from "langfuse";
 
 export interface LangfuseConfig {

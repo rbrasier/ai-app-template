@@ -1,4 +1,4 @@
-import type { ILogger } from "@template/domain";
+import type { ILogger } from "@rbrasier/domain";
 import pino from "pino";
 
 const createPinoInstance = (isDev: boolean) =>

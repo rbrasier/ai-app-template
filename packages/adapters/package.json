@@ -1,6 +1,5 @@
 {
-  "name": "@template/adapters",
-  "private": true,
+  "name": "@rbrasier/adapters",
   "version": "0.3.0",
   "type": "module",
   "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
@@ -109,8 +108,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@template/domain": "workspace:*",
-    "@template/shared": "workspace:*"
+    "@rbrasier/domain": "workspace:*",
+    "@rbrasier/shared": "workspace:*"
   },
   "peerDependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
@@ -119,16 +118,16 @@
     "@langchain/core": "^0.3.0",
     "@langchain/langgraph": "^0.2.0",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
-    "@opentelemetry/instrumentation-express": "^0.66.0",
-    "@opentelemetry/instrumentation-http": "^0.218.0",
-    "@opentelemetry/instrumentation-pg": "^0.70.0",
-    "@opentelemetry/resources": "^2.7.1",
-    "@opentelemetry/sdk-node": "^0.218.0",
-    "@opentelemetry/sdk-trace-node": "^2.7.1",
-    "@opentelemetry/semantic-conventions": "^1.41.1",
-    "@template/domain": ">=0.3.0",
-    "@template/shared": ">=0.3.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/instrumentation-express": "^0.47.0",
+    "@opentelemetry/instrumentation-http": "^0.57.0",
+    "@opentelemetry/instrumentation-pg": "^0.47.0",
+    "@opentelemetry/resources": "^1.30.0",
+    "@opentelemetry/sdk-node": "^0.57.0",
+    "@opentelemetry/sdk-trace-node": "^1.30.0",
+    "@opentelemetry/semantic-conventions": "^1.32.0",
+    "@rbrasier/domain": ">=0.3.0",
+    "@rbrasier/shared": ">=0.3.0",
     "ai": "^4.0.0",
     "better-auth": "^1.0.0",
     "drizzle-orm": "^0.45.2",

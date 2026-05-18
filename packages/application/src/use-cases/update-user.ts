@@ -5,7 +5,7 @@ import {
   type UserUpdate,
   domainError,
   err,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 export class UpdateUser {
   constructor(private readonly users: IUserRepository) {}

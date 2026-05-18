@@ -8,7 +8,7 @@ import {
   domainError,
   err,
   ok,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { CreateUser } from "./create-user";
 
 class InMemoryUsers implements IUserRepository {

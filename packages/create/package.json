@@ -1,14 +1,14 @@
 {
-  "name": "@template/create",
+  "name": "create-ai-app-template",
   "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Scaffold a new project from the ai-app-template framework.",
   "bin": {
-    "create-template": "./dist/index.js"
+    "create-ai-app-template": "./dist/index.js"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "files": ["dist"],
