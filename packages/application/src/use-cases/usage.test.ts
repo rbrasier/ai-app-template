@@ -7,7 +7,7 @@ import {
   type UsageFilter,
   type UsageSummary,
   ok,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { GetUsageSummary, TrackUsage } from "./track-usage";
 
 function makeUsageEvent(overrides: Partial<UsageEvent> = {}): UsageEvent {

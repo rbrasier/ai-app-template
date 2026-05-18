@@ -3,7 +3,7 @@ import {
   deleteUserInputSchema,
   listUsersInputSchema,
   updateUserInputSchema,
-} from "@template/shared";
+} from "@rbrasier/shared";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, router } from "../trpc";
 

@@ -1,6 +1,5 @@
 {
-  "name": "@template/domain",
-  "private": true,
+  "name": "@rbrasier/domain",
   "version": "0.3.0",
   "type": "module",
   "description": "Framework core — entities, port interfaces, Result type, DomainError. Zero external dependencies.",
@@ -10,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "registry": "https://registry.npmjs.org",
     "access": "public",
     "main": "./dist/index.cjs",
     "types": "./dist/index.d.ts",

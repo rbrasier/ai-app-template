@@ -18,6 +18,7 @@ FAIL=0
 
 pass() { echo -e "${GREEN}PASS${NC} — $1"; PASS=$((PASS + 1)); }
 fail() { echo -e "${RED}FAIL${NC} — $1"; FAIL=$((FAIL + 1)); }
+skip() { echo -e "${YELLOW}SKIP${NC} — $1"; }
 section() { echo; echo -e "${YELLOW}── $1 ──${NC}"; }
 
 # ── 1. typecheck ──────────────────────────────────────────────────────────────
@@ -34,11 +35,25 @@ if pnpm -s test; then pass "tests"; else fail "tests"; fi
 
 # ── 4. drizzle schema check ───────────────────────────────────────────────────
 section "4. drizzle-kit check"
-ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
-if pnpm --filter "$ADAPTERS_PKG" -s db:check; then
-  pass "drizzle schema"
+if [ -z "${DATABASE_URL:-}" ]; then
+  skip "drizzle schema check — DATABASE_URL not set"
+elif ! node -e "
+  const url = process.env.DATABASE_URL;
+  const m = url.match(/[@]([^:/]+):?([0-9]*)\//);
+  const host = m?.[1] ?? 'localhost';
+  const port = parseInt(m?.[2] || '5432');
+  const net = require('net');
+  const s = net.createConnection({ host, port });
+  s.on('connect', () => { s.destroy(); process.exit(0); });
+  s.on('error', () => process.exit(1));
+" 2>/dev/null; then
+  skip "drizzle schema check — database not reachable (run ./validate.sh once docker compose is up)"
 else
-  fail "drizzle schema"
+  if pnpm --filter "@rbrasier/adapters" -s db:check; then
+    pass "drizzle schema"
+  else
+    fail "drizzle schema"
+  fi
 fi
 
 # ── 5. domain purity ──────────────────────────────────────────────────────────

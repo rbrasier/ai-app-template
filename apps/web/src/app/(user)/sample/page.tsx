@@ -1,6 +1,6 @@
 "use client";
 
-import type { SampleResponse } from "@template/shared";
+import type { SampleResponse } from "@rbrasier/shared";
 import { useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
-import { domainError, err, ok, type IUserRepository, type Result } from "@template/domain";
+import { domainError, err, ok, type IUserRepository, type Result } from "@rbrasier/domain";
 import type { Database } from "../db/client";
 import { core_sessions, core_users } from "../db/schema/core";
 

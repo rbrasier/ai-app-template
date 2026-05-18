@@ -1,5 +1,5 @@
 {
-  "name": "@template/api",
+  "name": "@rbrasier/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,10 +13,10 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@template/adapters": "workspace:*",
-    "@template/application": "workspace:*",
-    "@template/domain": "workspace:*",
-    "@template/shared": "workspace:*",
+    "@rbrasier/adapters": "workspace:*",
+    "@rbrasier/application": "workspace:*",
+    "@rbrasier/domain": "workspace:*",
+    "@rbrasier/shared": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",

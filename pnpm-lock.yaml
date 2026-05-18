@@ -41,16 +41,16 @@ importers:
 
   apps/api:
     dependencies:
-      '@template/adapters':
+      '@rbrasier/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@template/application':
+      '@rbrasier/application':
         specifier: workspace:*
         version: link:../../packages/application
-      '@template/domain':
+      '@rbrasier/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@template/shared':
+      '@rbrasier/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       cors:
@@ -102,16 +102,16 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.59.0
         version: 5.100.9(react@19.2.6)
-      '@template/adapters':
+      '@rbrasier/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@template/application':
+      '@rbrasier/application':
         specifier: workspace:*
         version: link:../../packages/application
-      '@template/domain':
+      '@rbrasier/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@template/shared':
+      '@rbrasier/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@trpc/client':
@@ -193,10 +193,10 @@ importers:
 
   packages/adapters:
     dependencies:
-      '@template/domain':
+      '@rbrasier/domain':
         specifier: workspace:*
         version: link:../domain
-      '@template/shared':
+      '@rbrasier/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -287,10 +287,10 @@ importers:
 
   packages/application:
     dependencies:
-      '@template/domain':
+      '@rbrasier/domain':
         specifier: workspace:*
         version: link:../domain
-      '@template/shared':
+      '@rbrasier/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:

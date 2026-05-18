@@ -30,11 +30,20 @@ code, run `./validate.sh` and fix all failures before declaring done.
 
 ## Project Identity
 
-This repo is the **template** scaffold. Package scope is `@template/*`.
-When bootstrapping a new project via `/new-feature`, replace `template`
-everywhere and run `pnpm install` to regenerate the lockfile.
+This repo is the **template** scaffold. Framework packages are published under
+`@rbrasier/*` on GitHub Package Registry and consumed as versioned npm
+dependencies by downstream projects. The `packages/create` bootstrapper is
+published to public npm as `create-ai-app-template`.
 
-See `docs/guides/architecture.md` for the full architectural picture.
+When a real project is bootstrapped via `npx create-ai-app-template` or `pnpm run init`:
+
+- `packages/` is removed (framework source becomes an npm dep, not local workspace code)
+- Only `@rbrasier/web` and `@rbrasier/api` are renamed to `@<app-scope>/web` and `@<app-scope>/api`
+- `workspace:*` framework deps become versioned ranges (e.g. `^0.5.0`)
+- `pnpm-workspace.yaml` is updated to `apps/*` only
+- `.framework-scope=@rbrasier`, `.template-version`, and `.npmrc` are written
+
+Run `./validate.sh` once infrastructure (DB, Redis) is running.
 
 ---
 
@@ -43,9 +52,9 @@ See `docs/guides/architecture.md` for the full architectural picture.
 Enforced by `validate.sh` and ESLint — skills that write code must respect these:
 
 - `packages/domain` has **zero external dependencies**. Pure TypeScript, relative imports only.
-- `packages/application` imports only `@template/domain` and `@template/shared`. No frameworks, no ORMs, no AI SDKs.
+- `packages/application` imports only `@rbrasier/domain` and `@rbrasier/shared`. No frameworks, no ORMs, no AI SDKs.
 - `packages/adapters` implements interfaces from `packages/domain`. Drizzle, Vercel AI SDK, LangGraph.js, Langfuse, and Better Auth live here.
-- Apps (`apps/*`) import from `@template/application` and `@template/adapters` only. Wiring lives in `lib/container.ts`.
+- Apps (`apps/*`) import from `@rbrasier/application` and `@rbrasier/adapters` only. Wiring lives in `lib/container.ts`.
 - All port interfaces use the **Result pattern**: `{ data: T } | { error: DomainError }`. Never throw across boundaries.
 - Domain entities are plain TypeScript — no decorators, no ORM annotations.
 - DB table names use group prefixes: `core_`, `ai_`, `kb_`, `admin_`, `app_`, `job_`. Columns are snake_case. Every table has `id` (uuid), `created_at`, `updated_at`.

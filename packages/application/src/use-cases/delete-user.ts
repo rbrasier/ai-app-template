@@ -3,7 +3,7 @@ import {
   type Result,
   domainError,
   err,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 export class DeleteUser {
   constructor(private readonly users: IUserRepository) {}

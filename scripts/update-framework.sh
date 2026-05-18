@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# scripts/update-framework.sh — update @{scope}/* framework packages.
+# scripts/update-framework.sh — update @rbrasier/* framework packages.
 #
-# Reads the framework scope from .framework-scope (written by init-project.sh).
+# Framework packages are published under @rbrasier on GitHub Package Registry.
 # Flags:
 #   --dry-run        Show what would update; make no changes
 #   --interactive    Confirm every step, even MINOR/PATCH bumps
@@ -38,7 +38,7 @@ warn()    { echo -e "${YELLOW}!${NC}  $1"; }
 section() { echo; echo -e "${BOLD}── $1 ──${NC}"; }
 
 # ── read framework scope ──────────────────────────────────────────────────────
-FRAMEWORK_SCOPE=$(cat .framework-scope 2>/dev/null || echo "@template")
+FRAMEWORK_SCOPE=$(cat .framework-scope 2>/dev/null || echo "@rbrasier")
 
 FRAMEWORK_PKGS=(
   "${FRAMEWORK_SCOPE}/domain"

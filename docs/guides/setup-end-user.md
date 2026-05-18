@@ -20,7 +20,7 @@ longer depends on the template repo directly.
 ## Option A — One-command scaffold (recommended)
 
 ```bash
-npx @template/create
+npx @rbrasier/create
 ```
 
 The CLI asks a few questions and creates a fully configured project in a new
@@ -33,7 +33,7 @@ directory:
 
 After confirmation the CLI:
 - Clones the template and resets git history
-- Renames all `@template/` references to your scope
+- Renames all `@rbrasier/` references to your scope
 - Writes `.template-version` and `.framework-scope` tracking files
 - Copies `.env.example` → `.env`
 - Runs `pnpm install`
@@ -53,7 +53,7 @@ pnpm run init
 ```
 
 `pnpm run init` calls `scripts/init-project.sh`, which asks the same questions
-as the `@template/create` CLI and performs the same rename and dependency
+as the `@rbrasier/create` CLI and performs the same rename and dependency
 installation. It exits early if the project was already initialised.
 
 ---

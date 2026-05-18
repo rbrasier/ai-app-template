@@ -4,7 +4,7 @@ import {
   type IErrorLogRepository,
   type IErrorLogger,
   type Result,
-} from "@template/domain";
+} from "@rbrasier/domain";
 
 /**
  * Writes errors to the `app_error_log` table via IErrorLogRepository.

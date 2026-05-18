@@ -8,7 +8,7 @@ import {
   type Result,
   type User,
   type UserUpdate,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { PkiCertAdapter, type PkiConfig } from "../pki-cert-adapter";
 
 // ── in-memory user repository fake ──────────────────────────────────────────

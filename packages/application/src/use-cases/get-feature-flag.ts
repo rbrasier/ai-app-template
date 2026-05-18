@@ -1,4 +1,4 @@
-import type { FeatureFlag, IFeatureFlagRepository, NewFeatureFlag, Result } from "@template/domain";
+import type { FeatureFlag, IFeatureFlagRepository, NewFeatureFlag, Result } from "@rbrasier/domain";
 
 export class GetFeatureFlag {
   constructor(private readonly repo: IFeatureFlagRepository) {}

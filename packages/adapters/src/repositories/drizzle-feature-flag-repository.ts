@@ -6,7 +6,7 @@ import {
   type IFeatureFlagRepository,
   type NewFeatureFlag,
   type Result,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { core_feature_flag } from "../db/schema/core";

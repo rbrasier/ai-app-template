@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { mistral } from "@ai-sdk/mistral";
 import type { LanguageModel } from "ai";
-import type { ProviderName } from "@template/domain";
+import type { ProviderName } from "@rbrasier/domain";
 
 interface ProviderEntry {
   readonly defaultModel: string;
@@ -13,7 +13,7 @@ interface ProviderEntry {
  * Registry of providers. To add a new provider:
  *   1. `pnpm add @ai-sdk/<name>` in this package.
  *   2. Add a new entry below with its default model + resolver.
- *   3. Add the literal name to ProviderName in @template/domain.
+ *   3. Add the literal name to ProviderName in @rbrasier/domain.
  * Nothing else changes.
  */
 const PROVIDERS = {

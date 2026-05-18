@@ -1,4 +1,4 @@
-import { sendMessageInputSchema, type SampleResponse } from "@template/shared";
+import { sendMessageInputSchema, type SampleResponse } from "@rbrasier/shared";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../trpc";
 

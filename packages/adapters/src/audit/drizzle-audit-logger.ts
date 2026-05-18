@@ -5,7 +5,7 @@ import {
   type IAuditLogger,
   type NewAuditLog,
   type Result,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import type { Database } from "../db/client";
 import { core_audit_log } from "../db/schema/core";
 

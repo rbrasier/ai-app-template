@@ -17,7 +17,7 @@ import {
   UpdateErrorStatus,
   UpdateUser,
   UpsertFeatureFlag,
-} from "@template/application";
+} from "@rbrasier/application";
 import {
   DrizzleAuditLogger,
   DrizzleConversationRepository,
@@ -37,7 +37,7 @@ import {
   withOptionalLangfuse,
   withUsageTracking,
   type AuthMethod,
-} from "@template/adapters";
+} from "@rbrasier/adapters";
 import { serverEnv } from "./env";
 
 let cached: ReturnType<typeof build> | null = null;

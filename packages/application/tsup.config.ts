@@ -7,5 +7,5 @@ export default defineConfig({
   tsconfig: "./tsconfig.build.json",
   clean: true,
   sourcemap: true,
-  external: ["@template/domain", "@template/shared"],
+  external: ["@rbrasier/domain", "@rbrasier/shared"],
 });

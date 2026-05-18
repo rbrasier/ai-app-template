@@ -13,8 +13,8 @@ import {
   domainError,
   err,
   ok,
-} from "@template/domain";
-import type { ErrorLogPayload } from "@template/domain";
+} from "@rbrasier/domain";
+import type { ErrorLogPayload } from "@rbrasier/domain";
 import { LogError } from "./log-error";
 import { LogAuditEvent } from "./log-audit-event";
 import { ListErrors } from "./list-errors";

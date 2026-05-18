@@ -1,9 +1,37 @@
-# template
+# ai-app-template
 
 Production-ready AI application monorepo template using **hexagonal architecture**.
 
-> **First time using this template?** Rename `template` → your project name everywhere.
-> See `CLAUDE.md` → "Project Identity" for the checklist.
+---
+
+## Create a new project
+
+```bash
+pnpm create ai-app-template
+# or
+npx create-ai-app-template
+```
+
+This scaffolds a fresh project, wires `@rbrasier/*` framework packages as versioned
+npm dependencies, and leaves you with a clean git history. You will be prompted for
+project name, package scope, AI provider, auth method, and Langfuse preference.
+
+After scaffolding:
+
+```bash
+cd my-app
+# fill in .env — DATABASE_URL, BETTER_AUTH_SECRET, ADMIN_SEED_EMAIL, AI key
+docker compose up -d
+pnpm db:migrate
+./restart.sh
+# web → http://localhost:3000   api → http://localhost:3001
+```
+
+To pull in framework updates later:
+
+```bash
+pnpm run framework:update
+```
 
 ---
 
@@ -26,27 +54,18 @@ Production-ready AI application monorepo template using **hexagonal architecture
 
 ---
 
-## Quickstart
+## Contributing to this template
+
+If you are working on the template itself (not creating a project from it):
 
 ```bash
-# 1. Install
 pnpm install
-
-# 2. Copy env file
-cp .env.example .env
-# fill in DATABASE_URL, BETTER_AUTH_SECRET, ADMIN_SEED_EMAIL, ANTHROPIC_API_KEY
-
-# 3. Bring up Postgres (and optional Langfuse)
-docker compose up -d postgres
-
-# 4. Migrate
+cp .env.example .env   # fill in DATABASE_URL, BETTER_AUTH_SECRET, etc.
+docker compose up -d
 pnpm db:migrate
-
-# 5. Run everything
 ./restart.sh
+# web → http://localhost:3000   api → http://localhost:3001
 ```
-
-The web app runs at <http://localhost:3000>, the public API at <http://localhost:3001>.
 
 ---
 
@@ -59,7 +78,7 @@ apps/
 packages/
   domain/              Pure TypeScript. Entities, ports, errors.
                        ZERO external dependencies.
-  application/         Use cases. Imports only @template/domain.
+  application/         Use cases. Imports only @rbrasier/domain.
   adapters/            Drizzle, AI SDK, LangGraph, Langfuse, Better Auth.
                        Implements port interfaces.
   shared/              Zod schemas, types, utils. No business logic.

@@ -8,7 +8,7 @@ import type {
   ILogger,
   IUsageRepository,
   IUserRepository,
-} from "@template/domain";
+} from "@rbrasier/domain";
 import { AiHealthChecker } from "./health/ai-health-checker";
 import { CompositeHealthChecker } from "./health/composite-health-checker";
 import { DbHealthChecker } from "./health/db-health-checker";
