@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/shared",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "type": "module",
   "description": "Framework shared Zod schemas for input validation at application boundaries.",
   "main": "./src/index.ts",
