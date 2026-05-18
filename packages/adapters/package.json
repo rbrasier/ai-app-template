@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/adapters",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
   "main": "./src/index.ts",
