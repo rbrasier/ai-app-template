@@ -1,7 +1,7 @@
 {
   "name": "@template/shared",
-  "version": "0.3.0",
   "private": true,
+  "version": "0.3.0",
   "type": "module",
   "description": "Framework shared Zod schemas for input validation at application boundaries.",
   "main": "./src/index.ts",
@@ -22,7 +22,10 @@
       }
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit -p tsconfig.json",

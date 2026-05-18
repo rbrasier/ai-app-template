@@ -185,35 +185,43 @@ PUBLISHED_PKGS=(
   "packages/application/package.json"
   "packages/adapters/package.json"
 )
-PUB_VIOLATIONS=""
-for pkg in "${PUBLISHED_PKGS[@]}"; do
-  if [ -f "$pkg" ]; then
-    if node -e "const p = require('./${pkg}'); if (p.private) process.exit(1)" 2>/dev/null; then
-      : # not private — good
-    else
-      PUB_VIOLATIONS+="  $pkg has private: true\n"
-    fi
-  fi
-done
-if [ -z "$PUB_VIOLATIONS" ]; then
-  pass "published packages are not marked private"
+# Detect whether the template scope has been replaced with a real org/user scope.
+# While still @template/* the packages must remain private so CI doesn't attempt
+# to publish to a registry with a non-existent scope.
+SCOPE=$(node -e "process.stdout.write(require('./packages/domain/package.json').name.split('/')[0])" 2>/dev/null)
+if [ "$SCOPE" = "@template" ]; then
+  pass "publishable packages check skipped — scope is still @template (template not yet bootstrapped)"
 else
-  fail "publishable packages should not have private: true:"
-  printf '%b' "$PUB_VIOLATIONS"
-fi
-
-# Verify each published package has a publishConfig.registry set
-for pkg in "${PUBLISHED_PKGS[@]}"; do
-  if [ -f "$pkg" ]; then
-    pkg_name=$(node -e "process.stdout.write(require('./${pkg}').name)")
-    has_registry=$(node -e "const p = require('./${pkg}'); process.stdout.write(p.publishConfig?.registry ? 'yes' : 'no')" 2>/dev/null)
-    if [ "$has_registry" = "yes" ]; then
-      pass "publishConfig.registry set in $pkg_name"
-    else
-      fail "publishConfig.registry missing in $pkg_name"
+  PUB_VIOLATIONS=""
+  for pkg in "${PUBLISHED_PKGS[@]}"; do
+    if [ -f "$pkg" ]; then
+      if node -e "const p = require('./${pkg}'); if (p.private) process.exit(1)" 2>/dev/null; then
+        : # not private — good
+      else
+        PUB_VIOLATIONS+="  $pkg has private: true\n"
+      fi
     fi
+  done
+  if [ -z "$PUB_VIOLATIONS" ]; then
+    pass "published packages are not marked private"
+  else
+    fail "publishable packages should not have private: true:"
+    printf '%b' "$PUB_VIOLATIONS"
   fi
-done
+
+  # Verify each published package has a publishConfig.registry set
+  for pkg in "${PUBLISHED_PKGS[@]}"; do
+    if [ -f "$pkg" ]; then
+      pkg_name=$(node -e "process.stdout.write(require('./${pkg}').name)")
+      has_registry=$(node -e "const p = require('./${pkg}'); process.stdout.write(p.publishConfig?.registry ? 'yes' : 'no')" 2>/dev/null)
+      if [ "$has_registry" = "yes" ]; then
+        pass "publishConfig.registry set in $pkg_name"
+      else
+        fail "publishConfig.registry missing in $pkg_name"
+      fi
+    fi
+  done
+fi
 
 # ── 12. adapters peer dependency ranges are valid semver ─────────────────────
 section "12. adapters peer dependency versions are valid semver ranges"
