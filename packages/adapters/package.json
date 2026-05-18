@@ -21,7 +21,7 @@
     "./telemetry": "./src/telemetry/index.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "registry": "https://registry.npmjs.org",
     "access": "public",
     "main": "./dist/index.cjs",
     "types": "./dist/index.d.ts",

@@ -183,12 +183,6 @@ async function scaffold(opts: ScaffoldOptions) {
   run("git add .", targetDir);
   run(`git commit -q -m "chore: initial commit from ai-app-template v${frameworkVersion}"`, targetDir);
 
-  // ── configure npm registry auth for @rbrasier scope ──────────────────────
-  writeFileSync(
-    join(targetDir, ".npmrc"),
-    `@rbrasier:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=\${GITHUB_TOKEN}\n`,
-  );
-
   // ── install dependencies ──────────────────────────────────────────────────
   console.log(pc.green("  Installing dependencies…"));
   run("pnpm install", targetDir);
@@ -202,8 +196,7 @@ async function scaffold(opts: ScaffoldOptions) {
   console.log(`    cd ${projectName}`);
   console.log();
   console.log("  Next steps:");
-  console.log("    1. Set GITHUB_TOKEN in your environment (read:packages scope)");
-  console.log("    2. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)");
+  console.log("    1. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)");
   console.log("    3. Start infrastructure:   docker compose up -d");
   console.log("    4. Start the app:          ./restart.sh");
   console.log("    5. Open the app:           http://localhost:3000");

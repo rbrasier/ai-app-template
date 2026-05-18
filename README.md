@@ -16,14 +16,6 @@ This scaffolds a fresh project, wires `@rbrasier/*` framework packages as versio
 npm dependencies, and leaves you with a clean git history. You will be prompted for
 project name, package scope, AI provider, auth method, and Langfuse preference.
 
-**Prerequisite:** set `GITHUB_TOKEN` in your environment before running — it needs
-`read:packages` scope to pull `@rbrasier/*` from GitHub Package Registry.
-
-```bash
-export GITHUB_TOKEN=ghp_...
-pnpm create ai-app-template
-```
-
 After scaffolding:
 
 ```bash

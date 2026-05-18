@@ -229,14 +229,6 @@ if [ -f .env.example ]; then
   fi
 fi
 
-# ── write .npmrc for @rbrasier GitHub Package Registry auth ──────────────────
-
-info "Writing .npmrc for @rbrasier registry auth…"
-cat > .npmrc << 'EOF'
-@rbrasier:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-EOF
-
 # ── reset git history ─────────────────────────────────────────────────────────
 
 info "Resetting git history…"
@@ -294,8 +286,7 @@ echo -e "  ${GREEN}✓ Project \"${PROJECT_NAME}\" is ready.${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
 echo "  Next steps:"
-echo "    1. Set GITHUB_TOKEN in your environment (read:packages scope)"
-echo "    2. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)"
+echo "    1. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)"
 if [[ "$AUTH_METHOD" == "pki" || "$AUTH_METHOD" == "pki-and-magic-link" ]]; then
 echo "    ★  Set PKI_TRUSTED_PROXY_IPS in .env to your reverse proxy's IP(s)"
 fi
