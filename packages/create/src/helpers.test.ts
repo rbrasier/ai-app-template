@@ -1,8 +1,12 @@
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildDatabaseUrl,
   generateSecret,
   isDatabaseUrl,
+  isDirectoryEmpty,
   patchEnvContent,
 } from "./helpers.js";
 
@@ -89,5 +93,61 @@ describe("patchEnvContent", () => {
   it("does not replace a key that is not present", () => {
     const original = patchEnvContent(sample, { NONEXISTENT_KEY: "value" });
     expect(original).toBe(sample);
+  });
+});
+
+describe("isDirectoryEmpty", () => {
+  function makeTmpDir(): string {
+    return mkdtempSync(join(tmpdir(), "create-test-"));
+  }
+
+  it("returns true for a truly empty directory", () => {
+    const dir = makeTmpDir();
+    try {
+      expect(isDirectoryEmpty(dir)).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it("returns true when only .DS_Store is present", () => {
+    const dir = makeTmpDir();
+    try {
+      writeFileSync(join(dir, ".DS_Store"), "");
+      expect(isDirectoryEmpty(dir)).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it("returns true when only Thumbs.db is present", () => {
+    const dir = makeTmpDir();
+    try {
+      writeFileSync(join(dir, "Thumbs.db"), "");
+      expect(isDirectoryEmpty(dir)).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it("returns false when a real file is present", () => {
+    const dir = makeTmpDir();
+    try {
+      writeFileSync(join(dir, "package.json"), "{}");
+      expect(isDirectoryEmpty(dir)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it("returns false when a real file and .DS_Store are both present", () => {
+    const dir = makeTmpDir();
+    try {
+      writeFileSync(join(dir, ".DS_Store"), "");
+      writeFileSync(join(dir, "package.json"), "{}");
+      expect(isDirectoryEmpty(dir)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
   });
 });

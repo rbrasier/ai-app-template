@@ -12,7 +12,7 @@
  */
 
 import { execSync, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import prompts from "prompts";
 import pc from "picocolors";
@@ -20,6 +20,7 @@ import {
   buildDatabaseUrl,
   generateSecret,
   isDatabaseUrl,
+  isDirectoryEmpty,
   patchEnvContent,
 } from "./helpers.js";
 
@@ -232,8 +233,7 @@ async function scaffold(opts: ScaffoldOptions) {
     langfuseEnabled, databaseUrl, dbSetup, adminEmail, authSecret, targetDir,
   } = opts;
 
-  const entries = readdirSync(targetDir);
-  if (entries.length > 0) {
+  if (!isDirectoryEmpty(targetDir)) {
     console.error(pc.red(`  ✗ Target directory is not empty: ${targetDir}`));
     console.error(pc.red("    Create an empty directory and run this command from inside it."));
     process.exit(1);

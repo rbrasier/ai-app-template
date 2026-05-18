@@ -1,4 +1,13 @@
 import { randomBytes } from "node:crypto";
+import { readdirSync } from "node:fs";
+
+// OS-generated files that should not be considered project content
+const IGNORED_ENTRIES = new Set([".DS_Store", "Thumbs.db", ".Spotlight-V100", ".Trashes"]);
+
+export function isDirectoryEmpty(dirPath: string): boolean {
+  const entries = readdirSync(dirPath);
+  return entries.every((entry) => IGNORED_ENTRIES.has(entry));
+}
 
 export function generateSecret(): string {
   return randomBytes(32).toString("base64url");
