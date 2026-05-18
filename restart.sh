@@ -84,17 +84,27 @@ if [ -f .env ]; then
 fi
 # packages/adapters/package.json exists in the template repo but is removed when
 # a project is scaffolded (the package becomes a versioned npm dependency).
-# Fall back to .framework-scope written by create-ai-app-template.
+# In template mode: use pnpm --filter to run drizzle-kit migrate.
+# In scaffolded mode: pnpm --filter finds no workspace package; instead call
+# the exported runMigrations() function from the installed npm package.
 if [ -f packages/adapters/package.json ]; then
   ADAPTERS_PKG=$(node -e "process.stdout.write(require('./packages/adapters/package.json').name)")
+  pnpm --filter "$ADAPTERS_PKG" db:migrate || {
+    echo "  migration failed — check DATABASE_URL in .env"
+    exit 1
+  }
 else
   FRAMEWORK_SCOPE=$(cat .framework-scope 2>/dev/null || echo "@rbrasier")
   ADAPTERS_PKG="${FRAMEWORK_SCOPE}/adapters"
+  node --input-type=module -e "
+    import { runMigrations } from '${ADAPTERS_PKG}/db';
+    await runMigrations(process.env.DATABASE_URL ?? '');
+    console.log('  migrations complete');
+  " || {
+    echo "  migration failed — check DATABASE_URL in .env"
+    exit 1
+  }
 fi
-pnpm --filter "$ADAPTERS_PKG" db:migrate || {
-  echo "  migration failed — check DATABASE_URL in .env"
-  exit 1
-}
 
 echo "→ starting dev servers (Ctrl-C to stop)"
 exec pnpm turbo dev

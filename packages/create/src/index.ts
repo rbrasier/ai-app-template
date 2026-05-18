@@ -265,12 +265,26 @@ async function scaffold(opts: ScaffoldOptions) {
   replaceInFile(join(targetDir, "apps/api/package.json"), `"@rbrasier/api"`, `"${appScope}/api"`);
 
   // ── swap workspace:* framework refs → versioned npm deps ──────────────────
-  console.log(pc.green("  Wiring framework packages as versioned npm dependencies…"));
-  const versionRange = `^${frameworkVersion}`;
+  // When PACKS_DIR is set (local test mode via init-project-test.sh), use
+  // file: references pointing at packed tarballs so the scaffolded project
+  // installs from local builds instead of npm. This allows testing without
+  // publishing first. In normal operation PACKS_DIR is unset and npm ranges
+  // are used.
+  const packsDir = process.env.PACKS_DIR;
+  console.log(pc.green(
+    packsDir
+      ? "  Wiring framework packages as local file references (PACKS_DIR set)…"
+      : "  Wiring framework packages as versioned npm dependencies…"
+  ));
   for (const appDir of ["apps/web", "apps/api"]) {
     const pkgPath = join(targetDir, appDir, "package.json");
     if (!existsSync(pkgPath)) continue;
     for (const pkg of FRAMEWORK_PKGS) {
+      // Pack file naming: @rbrasier/adapters@1.0.0 → rbrasier-adapters-1.0.0.tgz
+      const scopeSlug = FRAMEWORK_SCOPE.replace(/^@/, "");
+      const versionRange = packsDir
+        ? `file:${packsDir}/${scopeSlug}-${pkg}-${frameworkVersion}.tgz`
+        : `^${frameworkVersion}`;
       replaceInFile(pkgPath, `"${FRAMEWORK_SCOPE}/${pkg}": "workspace:*"`, `"${FRAMEWORK_SCOPE}/${pkg}": "${versionRange}"`);
     }
   }

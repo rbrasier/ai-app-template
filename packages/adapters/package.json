@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/adapters",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
   "main": "./src/index.ts",
@@ -95,7 +95,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "drizzle"
   ],
   "scripts": {
     "build": "tsup",

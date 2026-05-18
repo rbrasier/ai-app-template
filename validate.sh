@@ -324,6 +324,31 @@ else
   fail "@opentelemetry/* packages declared as peerDependencies in adapters — must be dependencies: $OTEL_IN_PEERS"
 fi
 
+# ── 18. restart.sh uses runMigrations in scaffolded mode ─────────────────────
+section "18. restart.sh uses runMigrations for scaffolded projects"
+# In a scaffolded project pnpm --filter finds no workspace package for adapters.
+# restart.sh must detect scaffolded mode and call runMigrations() instead.
+if grep -q "runMigrations" restart.sh; then
+  pass "restart.sh calls runMigrations in scaffolded mode"
+else
+  fail "restart.sh does not call runMigrations — scaffolded projects cannot run migrations"
+fi
+
+# ── 19. adapters publishes drizzle migration files ────────────────────────────
+section "19. adapters package.json includes drizzle migrations in files"
+# The runMigrations() function resolves migrations from the published package's
+# drizzle/ folder. If that folder is excluded from files, migrations fail.
+DRIZZLE_IN_FILES=$(node -e "
+  const pkg = require('./packages/adapters/package.json');
+  const files = pkg.files || [];
+  process.stdout.write(files.includes('drizzle') ? 'yes' : 'no');
+" 2>/dev/null)
+if [ "$DRIZZLE_IN_FILES" = "yes" ]; then
+  pass "adapters publishes drizzle migrations folder"
+else
+  fail "adapters does not include drizzle in files — runMigrations() cannot find SQL files in scaffolded projects"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"
