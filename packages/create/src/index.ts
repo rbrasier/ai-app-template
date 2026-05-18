@@ -2,41 +2,80 @@
 /**
  * create-ai-app-template — interactive scaffold CLI.
  *
- * Usage:
- *   npx create-ai-app-template
- *   npx create-ai-app-template my-saas-app
+ * Usage (run from inside your target directory):
+ *   cd my-app
  *   pnpm create ai-app-template
+ *   npx create-ai-app-template
  *
- * Creates a new project directory, wires @rbrasier/* framework packages as
- * versioned npm dependencies, and leaves git history clean.
+ * Scaffolds into the current working directory, wires @rbrasier/* framework
+ * packages as versioned npm dependencies, and leaves git history clean.
  */
 
-import { execSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { execSync, spawnSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 import prompts from "prompts";
 import pc from "picocolors";
+import {
+  buildDatabaseUrl,
+  generateSecret,
+  isDatabaseUrl,
+  patchEnvContent,
+} from "./helpers.js";
 
 const TEMPLATE_REPO = "https://github.com/rbrasier/ai-app-template";
 const FRAMEWORK_SCOPE = "@rbrasier";
 const FRAMEWORK_PKGS = ["domain", "shared", "application", "adapters"] as const;
 
+type AiProvider = "anthropic" | "openai" | "mistral";
+type DbSetup = "local" | "docker" | "url";
+
 interface ScaffoldOptions {
   projectName: string;
   appScope: string;
-  aiProvider: "anthropic" | "openai" | "mistral";
+  aiProvider: AiProvider;
+  aiProviderKey: string;
   langfuseEnabled: boolean;
+  databaseUrl: string;
+  dbSetup: DbSetup;
+  adminEmail: string;
+  authSecret: string;
   targetDir: string;
 }
 
-async function collectInputs(argv: string[]): Promise<ScaffoldOptions> {
-  const nameArg = argv[2];
+function run(cmd: string, cwd?: string) {
+  execSync(cmd, { stdio: "inherit", cwd });
+}
+
+function detectPostgres(): boolean {
+  const result = spawnSync("pg_isready", [], { encoding: "utf8" });
+  if (result.status === 0) return true;
+  const psql = spawnSync("psql", ["--version"], { encoding: "utf8" });
+  return psql.status === 0;
+}
+
+function detectPlatform(): "mac" | "linux" | "unknown" {
+  const platform = process.platform;
+  if (platform === "darwin") return "mac";
+  if (platform === "linux") return "linux";
+  return "unknown";
+}
+
+const AI_KEY_NAMES: Record<AiProvider, string> = {
+  anthropic: "ANTHROPIC_API_KEY",
+  openai: "OPENAI_API_KEY",
+  mistral: "MISTRAL_API_KEY",
+};
+
+async function collectInputs(): Promise<ScaffoldOptions> {
+  const targetDir = process.cwd();
+  const defaultName = basename(targetDir).toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
   const { projectName } = await prompts({
     type: "text",
     name: "projectName",
     message: "Project name (lowercase, hyphens only)",
-    initial: nameArg ?? "my-app",
+    initial: defaultName,
     validate: (v: string) =>
       /^[a-z][a-z0-9-]*$/.test(v)
         ? true
@@ -66,6 +105,78 @@ async function collectInputs(argv: string[]): Promise<ScaffoldOptions> {
   });
   if (!aiProvider) process.exit(0);
 
+  const { aiProviderKey } = await prompts({
+    type: "text",
+    name: "aiProviderKey",
+    message: `${AI_KEY_NAMES[aiProvider as AiProvider]} (leave blank to set later)`,
+    initial: "",
+  });
+
+  const { dbInput } = await prompts({
+    type: "text",
+    name: "dbInput",
+    message: "Database name or full connection URL",
+    initial: projectName,
+  });
+  if (dbInput === undefined) process.exit(0);
+
+  let databaseUrl: string;
+  let dbSetup: DbSetup = "local";
+
+  if (isDatabaseUrl(dbInput)) {
+    databaseUrl = dbInput;
+    dbSetup = "url";
+  } else {
+    const postgresFound = detectPostgres();
+    if (postgresFound) {
+      console.log(pc.green("  ✓ PostgreSQL detected locally"));
+      databaseUrl = buildDatabaseUrl(dbInput);
+      dbSetup = "local";
+    } else {
+      console.log(pc.yellow("  ! PostgreSQL not detected on this machine"));
+      const { installChoice } = await prompts({
+        type: "select",
+        name: "installChoice",
+        message: "How would you like to set up PostgreSQL?",
+        choices: [
+          { title: "Use Docker Compose (recommended)", value: "docker" },
+          ...(detectPlatform() === "mac"
+            ? [{ title: "Install via Homebrew (brew install postgresql@16)", value: "brew" }]
+            : []),
+          ...(detectPlatform() === "linux"
+            ? [{ title: "Install via apt (sudo apt-get install postgresql)", value: "apt" }]
+            : []),
+          { title: "I will set DATABASE_URL manually later", value: "manual" },
+        ],
+      });
+      if (!installChoice) process.exit(0);
+
+      if (installChoice === "brew") {
+        console.log(pc.green("  Installing PostgreSQL via Homebrew…"));
+        run("brew install postgresql@16");
+        run("brew services start postgresql@16");
+      } else if (installChoice === "apt") {
+        console.log(pc.green("  Installing PostgreSQL via apt…"));
+        run("sudo apt-get install -y postgresql");
+        run("sudo systemctl start postgresql");
+      }
+
+      databaseUrl = installChoice === "manual"
+        ? `postgresql://postgres:postgres@localhost:5432/${dbInput}`
+        : buildDatabaseUrl(dbInput);
+      dbSetup = installChoice === "docker" ? "docker" : "local";
+    }
+  }
+
+  const { adminEmail } = await prompts({
+    type: "text",
+    name: "adminEmail",
+    message: "Admin seed email",
+    initial: "admin@example.com",
+    validate: (v: string) => (v.includes("@") ? true : "Enter a valid email"),
+  });
+  if (!adminEmail) process.exit(0);
+
   const { langfuseEnabled } = await prompts({
     type: "confirm",
     name: "langfuseEnabled",
@@ -73,16 +184,17 @@ async function collectInputs(argv: string[]): Promise<ScaffoldOptions> {
     initial: false,
   });
 
-  const targetDir = join(process.cwd(), projectName);
+  const authSecret = generateSecret();
 
   console.log();
   console.log(pc.bold("  Summary"));
-  console.log(`  Project name     : ${pc.cyan(projectName)}`);
-  console.log(`  App scope        : ${pc.cyan(appScope)}`);
-  console.log(`  Framework scope  : ${pc.cyan(FRAMEWORK_SCOPE)} (published npm packages)`);
-  console.log(`  AI provider      : ${pc.cyan(aiProvider)}`);
-  console.log(`  Langfuse         : ${pc.cyan(String(langfuseEnabled))}`);
-  console.log(`  Target dir       : ${pc.cyan(targetDir)}`);
+  console.log(`  Project name   : ${pc.cyan(projectName)}`);
+  console.log(`  App scope      : ${pc.cyan(appScope)}`);
+  console.log(`  AI provider    : ${pc.cyan(aiProvider)}`);
+  console.log(`  Database       : ${pc.cyan(databaseUrl)}`);
+  console.log(`  Admin email    : ${pc.cyan(adminEmail)}`);
+  console.log(`  Langfuse       : ${pc.cyan(String(langfuseEnabled))}`);
+  console.log(`  Target dir     : ${pc.cyan(targetDir)}`);
   console.log();
 
   const { confirmed } = await prompts({
@@ -93,11 +205,18 @@ async function collectInputs(argv: string[]): Promise<ScaffoldOptions> {
   });
   if (!confirmed) { console.log("Aborted."); process.exit(0); }
 
-  return { projectName, appScope, aiProvider, langfuseEnabled, targetDir };
-}
-
-function run(cmd: string, cwd?: string) {
-  execSync(cmd, { stdio: "inherit", cwd });
+  return {
+    projectName,
+    appScope,
+    aiProvider: aiProvider as AiProvider,
+    aiProviderKey: aiProviderKey ?? "",
+    langfuseEnabled,
+    databaseUrl,
+    dbSetup,
+    adminEmail,
+    authSecret,
+    targetDir,
+  };
 }
 
 function replaceInFile(filePath: string, find: string, replace: string) {
@@ -108,16 +227,21 @@ function replaceInFile(filePath: string, find: string, replace: string) {
 }
 
 async function scaffold(opts: ScaffoldOptions) {
-  const { projectName, appScope, aiProvider, langfuseEnabled, targetDir } = opts;
+  const {
+    projectName, appScope, aiProvider, aiProviderKey,
+    langfuseEnabled, databaseUrl, dbSetup, adminEmail, authSecret, targetDir,
+  } = opts;
 
-  if (existsSync(targetDir)) {
-    console.error(pc.red(`  ✗ Directory already exists: ${targetDir}`));
+  const entries = readdirSync(targetDir);
+  if (entries.length > 0) {
+    console.error(pc.red(`  ✗ Target directory is not empty: ${targetDir}`));
+    console.error(pc.red("    Create an empty directory and run this command from inside it."));
     process.exit(1);
   }
 
   // ── clone & strip template git history ────────────────────────────────────
   console.log(pc.green("  Cloning template…"));
-  run(`git clone --depth=1 ${TEMPLATE_REPO} "${targetDir}"`);
+  run(`git clone --depth=1 ${TEMPLATE_REPO} .`, targetDir);
   rmSync(join(targetDir, ".git"), { recursive: true, force: true });
 
   // ── read framework version before we remove packages/ ─────────────────────
@@ -128,10 +252,7 @@ async function scaffold(opts: ScaffoldOptions) {
   rmSync(join(targetDir, "packages"), { recursive: true, force: true });
 
   // ── update pnpm-workspace.yaml to only list apps/ ─────────────────────────
-  writeFileSync(
-    join(targetDir, "pnpm-workspace.yaml"),
-    `packages:\n  - "apps/*"\n`,
-  );
+  writeFileSync(join(targetDir, "pnpm-workspace.yaml"), `packages:\n  - "apps/*"\n`);
 
   // ── rename app-level packages to the user's scope ─────────────────────────
   console.log(pc.green(`  Renaming @rbrasier/web and @rbrasier/api → ${appScope}/…`));
@@ -154,28 +275,46 @@ async function scaffold(opts: ScaffoldOptions) {
 
   // ── docker / env renames ──────────────────────────────────────────────────
   replaceInFile(join(targetDir, "docker-compose.yml"), "POSTGRES_DB=template", `POSTGRES_DB=${projectName}`);
-  const envExample = join(targetDir, ".env.example");
-  replaceInFile(envExample, "APP_NAME=template", `APP_NAME=${projectName}`);
-  replaceInFile(envExample, "/template", `/${projectName}`);
-  replaceInFile(envExample, "AI_DEFAULT_PROVIDER=anthropic", `AI_DEFAULT_PROVIDER=${aiProvider}`);
   if (existsSync(join(targetDir, "docker-compose.yml"))) {
     const dc = readFileSync(join(targetDir, "docker-compose.yml"), "utf8");
     writeFileSync(join(targetDir, "docker-compose.yml"), dc.replace(/^ {2}template:/m, `  ${projectName}:`));
   }
 
-  if (!langfuseEnabled && existsSync(envExample)) {
-    const content = readFileSync(envExample, "utf8");
-    writeFileSync(envExample, content.replace(/^(LANGFUSE_)/gm, "# $1"));
+  // ── write fully-populated .env ────────────────────────────────────────────
+  console.log(pc.green("  Writing .env with generated values…"));
+  const envExamplePath = join(targetDir, ".env.example");
+  const envExample = readFileSync(envExamplePath, "utf8");
+
+  const envReplacements: Record<string, string> = {
+    APP_NAME: projectName,
+    DATABASE_URL: databaseUrl,
+    BETTER_AUTH_SECRET: authSecret,
+    ADMIN_SEED_EMAIL: adminEmail,
+    AI_DEFAULT_PROVIDER: aiProvider,
+    OTEL_SERVICE_NAME: `${projectName}-api`,
+  };
+
+  if (aiProviderKey) {
+    const keyName = AI_KEY_NAMES[aiProvider];
+    envReplacements[keyName] = aiProviderKey;
   }
+
+  // Replace database name in DATABASE_URL placeholder that references "template"
+  let envContent = patchEnvContent(envExample, envReplacements);
+
+  if (!langfuseEnabled) {
+    envContent = envContent.replace(/^(LANGFUSE_)/gm, "# $1");
+  }
+
+  writeFileSync(join(targetDir, ".env"), envContent);
 
   // ── write tracking files ──────────────────────────────────────────────────
   console.log(pc.green("  Writing version tracking files…"));
   writeFileSync(join(targetDir, ".template-version"), frameworkVersion);
   writeFileSync(join(targetDir, ".framework-scope"), FRAMEWORK_SCOPE);
 
-  // ── copy .env ─────────────────────────────────────────────────────────────
-  console.log(pc.green("  Copying .env…"));
-  run(`cp .env.example .env`, targetDir);
+  // ── write .dbsetup so restart.sh knows how postgres is configured ──────────
+  writeFileSync(join(targetDir, ".dbsetup"), dbSetup);
 
   // ── initialise a clean git repo ───────────────────────────────────────────
   console.log(pc.green("  Initialising git repository…"));
@@ -193,19 +332,20 @@ async function scaffold(opts: ScaffoldOptions) {
   console.log(pc.green(`  ✓ Project "${projectName}" is ready.`));
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log();
-  console.log(`    cd ${projectName}`);
+  console.log("  Start the app:");
+  console.log(pc.cyan("    ./restart.sh"));
   console.log();
-  console.log("  Next steps:");
-  console.log("    1. Fill in secrets in .env (DATABASE_URL, BETTER_AUTH_SECRET, AI keys)");
-  console.log("    3. Start infrastructure:   docker compose up -d");
-  console.log("    4. Start the app:          ./restart.sh");
-  console.log("    5. Open the app:           http://localhost:3000");
-  console.log("    6. Push to GitHub:         git remote add origin <url> && git push -u origin main");
+  if (!aiProviderKey) {
+    console.log(pc.yellow(`  ! Add your ${AI_KEY_NAMES[aiProvider]} to .env before starting.`));
+    console.log();
+  }
+  console.log("  Push to GitHub:");
+  console.log("    git remote add origin <url> && git push -u origin main");
   console.log();
-  console.log("  To update the framework later:");
+  console.log("  Update the framework later:");
   console.log("    pnpm run framework:update");
   console.log();
 }
 
-const options = await collectInputs(process.argv);
+const options = await collectInputs();
 await scaffold(options);

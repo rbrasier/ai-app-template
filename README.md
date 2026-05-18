@@ -7,25 +7,17 @@ Production-ready AI application monorepo template using **hexagonal architecture
 ## Create a new project
 
 ```bash
+mkdir my-app && cd my-app
 pnpm create ai-app-template
-# or
-npx create-ai-app-template
-```
-
-This scaffolds a fresh project, wires `@rbrasier/*` framework packages as versioned
-npm dependencies, and leaves you with a clean git history. You will be prompted for
-project name, package scope, AI provider, auth method, and Langfuse preference.
-
-After scaffolding:
-
-```bash
-cd my-app
-# fill in .env — DATABASE_URL, BETTER_AUTH_SECRET, ADMIN_SEED_EMAIL, AI key
-docker compose up -d
-pnpm db:migrate
 ./restart.sh
 # web → http://localhost:3000   api → http://localhost:3001
 ```
+
+The create script prompts for project name, package scope, AI provider, database
+setup (name or existing URL), and admin email. It detects PostgreSQL locally, offers
+to install it or use Docker Compose if not found, auto-generates `BETTER_AUTH_SECRET`,
+and writes a fully-populated `.env`. Then `./restart.sh` installs all packages, starts
+infrastructure, runs migrations, and launches the dev servers.
 
 To pull in framework updates later:
 
