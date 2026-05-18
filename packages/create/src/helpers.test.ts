@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildDatabaseUrl,
+  buildPackFilename,
   generateSecret,
   isDatabaseUrl,
   isDirectoryEmpty,
@@ -93,6 +94,28 @@ describe("patchEnvContent", () => {
   it("does not replace a key that is not present", () => {
     const original = patchEnvContent(sample, { NONEXISTENT_KEY: "value" });
     expect(original).toBe(sample);
+  });
+});
+
+describe("buildPackFilename", () => {
+  it("constructs a file: reference using the given package version", () => {
+    const result = buildPackFilename("/tmp/packs", "rbrasier", "application", "1.0.0");
+    expect(result).toBe("file:/tmp/packs/rbrasier-application-1.0.0.tgz");
+  });
+
+  it("does not use a different package's version", () => {
+    const adapterVersion = "1.0.1";
+    const applicationVersion = "1.0.0";
+    const result = buildPackFilename("/tmp/packs", "rbrasier", "application", applicationVersion);
+    expect(result).not.toContain(adapterVersion);
+    expect(result).toContain(applicationVersion);
+  });
+
+  it("works for all framework package names", () => {
+    for (const pkg of ["domain", "shared", "application", "adapters"]) {
+      const result = buildPackFilename("/packs", "rbrasier", pkg, "2.3.4");
+      expect(result).toBe(`file:/packs/rbrasier-${pkg}-2.3.4.tgz`);
+    }
   });
 });
 

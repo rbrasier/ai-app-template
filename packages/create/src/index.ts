@@ -18,6 +18,7 @@ import prompts from "prompts";
 import pc from "picocolors";
 import {
   buildDatabaseUrl,
+  buildPackFilename,
   generateSecret,
   isDatabaseUrl,
   isDirectoryEmpty,
@@ -252,6 +253,19 @@ async function scaffold(opts: ScaffoldOptions) {
     readFileSync(join(targetDir, "packages", "adapters", "package.json"), "utf8"),
   ).version as string;
 
+  // When PACKS_DIR is set, each tarball is named from its own package version, not
+  // the adapters version. Read each version now before packages/ is removed so we
+  // can construct the correct filenames later.
+  const packsDir = process.env.PACKS_DIR;
+  const packageVersions = new Map<string, string>();
+  if (packsDir) {
+    for (const pkg of FRAMEWORK_PKGS) {
+      packageVersions.set(pkg, JSON.parse(
+        readFileSync(join(targetDir, "packages", pkg, "package.json"), "utf8"),
+      ).version as string);
+    }
+  }
+
   // ── remove the framework source packages (they become npm deps) ───────────
   console.log(pc.green("  Removing framework source packages…"));
   rmSync(join(targetDir, "packages"), { recursive: true, force: true });
@@ -270,7 +284,6 @@ async function scaffold(opts: ScaffoldOptions) {
   // installs from local builds instead of npm. This allows testing without
   // publishing first. In normal operation PACKS_DIR is unset and npm ranges
   // are used.
-  const packsDir = process.env.PACKS_DIR;
   console.log(pc.green(
     packsDir
       ? "  Wiring framework packages as local file references (PACKS_DIR set)…"
@@ -281,9 +294,10 @@ async function scaffold(opts: ScaffoldOptions) {
     if (!existsSync(pkgPath)) continue;
     for (const pkg of FRAMEWORK_PKGS) {
       // Pack file naming: @rbrasier/adapters@1.0.0 → rbrasier-adapters-1.0.0.tgz
+      // Each package has its own version; use per-package version for file: refs.
       const scopeSlug = FRAMEWORK_SCOPE.replace(/^@/, "");
       const versionRange = packsDir
-        ? `file:${packsDir}/${scopeSlug}-${pkg}-${frameworkVersion}.tgz`
+        ? buildPackFilename(packsDir, scopeSlug, pkg, packageVersions.get(pkg)!)
         : `^${frameworkVersion}`;
       replaceInFile(pkgPath, `"${FRAMEWORK_SCOPE}/${pkg}": "workspace:*"`, `"${FRAMEWORK_SCOPE}/${pkg}": "${versionRange}"`);
     }
@@ -344,6 +358,38 @@ async function scaffold(opts: ScaffoldOptions) {
   // ── install dependencies ──────────────────────────────────────────────────
   console.log(pc.green("  Installing dependencies…"));
   run("pnpm install", targetDir);
+
+  // ── create database ───────────────────────────────────────────────────────
+  // Run after pnpm install so the postgres package is available in apps/api.
+  // Connect to the admin "postgres" database (same host/user/pass as the app
+  // URL) and issue CREATE DATABASE. Error 42P04 (duplicate) is silently ignored
+  // so re-running the scaffold is safe.
+  console.log(pc.green("  Creating database if it does not exist…"));
+  const createDbScript = `
+import postgres from 'postgres';
+const url = ${JSON.stringify(databaseUrl)};
+const dbName = url.match(/\\/([^/?#]+)(?:\\?|#|$)/)?.[1] ?? '';
+if (!dbName) process.exit(0);
+const adminUrl = url.replace(/(:\\d+\\/)([^/?#]+)/, '$1postgres');
+const sql = postgres(adminUrl, { max: 1, connect_timeout: 5 });
+try {
+  await sql\`CREATE DATABASE \${sql(dbName)}\`;
+  console.log('  database created: ' + dbName);
+} catch (e) {
+  if (e.code !== '42P04') throw e;
+} finally {
+  await sql.end({ timeout: 2 });
+}
+`;
+  const createDbScriptPath = join(targetDir, "__create_db__.mjs");
+  try {
+    writeFileSync(createDbScriptPath, createDbScript);
+    run(`node ${createDbScriptPath}`, join(targetDir, "apps/api"));
+  } catch {
+    console.log(pc.yellow("  ! Could not create database automatically — create it manually before running restart.sh"));
+  } finally {
+    rmSync(createDbScriptPath, { force: true });
+  }
 
   // ── summary ───────────────────────────────────────────────────────────────
   console.log();

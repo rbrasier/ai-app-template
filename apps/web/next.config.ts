@@ -13,9 +13,11 @@ const config: NextConfig = {
     "pino",
     "pino-pretty",
     "@opentelemetry/sdk-node",
+    "@opentelemetry/instrumentation",
     "@opentelemetry/instrumentation-http",
     "@opentelemetry/instrumentation-express",
     "@opentelemetry/instrumentation-pg",
+    "require-in-the-middle",
   ],
 };
 

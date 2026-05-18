@@ -21,6 +21,10 @@ export function buildDatabaseUrl(dbName: string): string {
   return `postgresql://postgres:postgres@localhost:5432/${dbName}`;
 }
 
+export function buildPackFilename(packsDir: string, scopeSlug: string, pkg: string, pkgVersion: string): string {
+  return `file:${packsDir}/${scopeSlug}-${pkg}-${pkgVersion}.tgz`;
+}
+
 /**
  * Replaces env var values in a .env file's text content.
  * Only replaces lines matching `KEY=<anything>` exactly; ignores comments.

@@ -82,6 +82,43 @@ if [ -f .env ]; then
   source .env
   set +a
 fi
+
+# Safety-net: create the database if it does not yet exist (e.g. dropped manually
+# or first run on a machine that skipped the scaffold). The primary creation happens
+# in the scaffold (create package) using the postgres npm package. Here we fall back
+# to CLI tools, passing PGPASSWORD from DATABASE_URL so no interactive prompt appears.
+DB_NAME=$(node -e "
+  const u = process.env.DATABASE_URL || '';
+  const m = u.match(/\/([^/?#]+)(?:\?|#|$)/);
+  process.stdout.write(m ? m[1] : '');
+")
+DB_HOST=$(node -e "
+  const u = process.env.DATABASE_URL || '';
+  const m = u.match(/\/\/[^:@]*(?::[^@]*)?@([^:/]+)/);
+  process.stdout.write(m ? m[1] : 'localhost');
+")
+DB_PORT=$(node -e "
+  const u = process.env.DATABASE_URL || '';
+  const m = u.match(/:(\d+)\//);
+  process.stdout.write(m ? m[1] : '5432');
+")
+DB_USER=$(node -e "
+  const u = process.env.DATABASE_URL || '';
+  const m = u.match(/\/\/([^:@]+)(?::[^@]*)?@/);
+  process.stdout.write(m ? m[1] : 'postgres');
+")
+DB_PASS=$(node -e "
+  const u = process.env.DATABASE_URL || '';
+  const m = u.match(/\/\/[^:@]+:([^@]*)@/);
+  process.stdout.write(m ? m[1] : '');
+")
+if [ -n "$DB_NAME" ]; then
+  PGPASSWORD="$DB_PASS" createdb -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" 2>/dev/null \
+    || PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres \
+         -c "CREATE DATABASE \"$DB_NAME\"" >/dev/null 2>&1 \
+    || true
+fi
+
 # packages/adapters/package.json exists in the template repo but is removed when
 # a project is scaffolded (the package becomes a versioned npm dependency).
 # In template mode: use pnpm --filter to run drizzle-kit migrate.
@@ -96,12 +133,14 @@ if [ -f packages/adapters/package.json ]; then
 else
   FRAMEWORK_SCOPE=$(cat .framework-scope 2>/dev/null || echo "@rbrasier")
   ADAPTERS_PKG="${FRAMEWORK_SCOPE}/adapters"
-  node --input-type=module -e "
+  # @rbrasier/adapters is a dependency of apps/api, not the project root.
+  # Run node from apps/api so module resolution finds the package.
+  (cd "$ROOT/apps/api" && node --input-type=module -e "
     import { runMigrations } from '${ADAPTERS_PKG}/db';
     await runMigrations(process.env.DATABASE_URL ?? '');
     console.log('  migrations complete');
-  " || {
-    echo "  migration failed — check DATABASE_URL in .env"
+  ") || {
+    echo "  migration failed — check DATABASE_URL in .env and that pnpm install completed"
     exit 1
   }
 fi

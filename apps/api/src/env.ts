@@ -18,4 +18,12 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-export const loadEnv = (): Env => envSchema.parse(process.env);
+export const loadEnv = (): Env => {
+  // Shell `source .env` exports empty-value lines (e.g. OTEL_EXPORTER_OTLP_ENDPOINT=)
+  // as empty strings. Zod treats "" as a provided string and fails .url() validation.
+  // Strip empty strings to undefined so optional URL fields behave as unset.
+  const env = Object.fromEntries(
+    Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+  );
+  return envSchema.parse(env);
+};

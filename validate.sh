@@ -349,6 +349,28 @@ else
   fail "adapters does not include drizzle in files — runMigrations() cannot find SQL files in scaffolded projects"
 fi
 
+# ── 20. restart.sh runs scaffolded migration from apps/api ───────────────────
+section "20. restart.sh runs node migration from apps/api in scaffolded mode"
+# @rbrasier/adapters is a dependency of apps/api, not the project root.
+# Node resolves modules from CWD upward, so the migration must be started from
+# apps/api, otherwise ERR_MODULE_NOT_FOUND is thrown.
+if grep -q 'cd.*apps/api' restart.sh; then
+  pass "restart.sh runs node migration from apps/api where @rbrasier/adapters is installed"
+else
+  fail "restart.sh runs node migration from project root — @rbrasier/adapters cannot be resolved (it is a dep of apps/api, not root)"
+fi
+
+# ── 21. restart.sh uses PGPASSWORD to avoid interactive password prompts ──────
+section "21. restart.sh uses PGPASSWORD when creating the database"
+# createdb/psql fall back to OS-level auth and may prompt for a password when
+# running non-interactively. PGPASSWORD must be set from DATABASE_URL credentials
+# so the safety-net db-creation step never blocks.
+if grep -q "PGPASSWORD" restart.sh; then
+  pass "restart.sh sets PGPASSWORD to avoid interactive password prompts"
+else
+  fail "restart.sh does not set PGPASSWORD — createdb may prompt for a password and block unattended runs"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"
