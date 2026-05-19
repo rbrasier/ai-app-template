@@ -169,6 +169,73 @@ echo
 info "Removing framework source packages (packages/ → npm deps)…"
 rm -rf packages/
 
+# ── strip framework-internal CI artefacts and validate checks ─────────────────
+
+info "Stripping framework CI/CD artefacts and publishing-pipeline validate checks…"
+
+# release.yml is the framework's npm publishing pipeline — apps have no NPM_TOKEN
+rm -f .github/workflows/release.yml
+
+# Remove CI jobs that only make sense inside the template repo (coverage job
+# hard-codes @template/* filter names that don't exist post-init; framework-updates
+# runs a script that isn't present in a bootstrapped app)
+python3 - << 'PYEOF'
+import re, pathlib, sys
+
+ci = pathlib.Path('.github/workflows/ci.yml')
+txt = ci.read_text()
+# coverage block ends where the next job at the same indent level begins
+txt = re.sub(r'\n  coverage:.*?(?=\n  \w)', '', txt, flags=re.DOTALL)
+# framework-updates block runs to EOF
+txt = re.sub(r'\n  framework-updates:.*', '', txt, flags=re.DOTALL)
+ci.write_text(txt.rstrip() + '\n')
+print('  ci.yml: removed coverage and framework-updates jobs')
+PYEOF
+
+# Remove the seven validate.sh sections that guard the publishing pipeline and
+# renumber the remaining 14 checks sequentially.
+python3 - << 'PYEOF'
+import re, pathlib, sys
+
+p = pathlib.Path('validate.sh')
+content = p.read_text()
+
+# Split at each numbered section boundary and the Summary block (lookahead keeps
+# the delimiter at the start of each part rather than consuming it)
+parts = re.split(r'(?=\n# ── (?:\d+\.|Summary))', content)
+
+to_remove = {11, 12, 16, 17, 19, 20, 21}
+kept = []
+for part in parts:
+    m = re.match(r'\n# ── (\d+)\.', part)
+    if m and int(m.group(1)) in to_remove:
+        continue
+    kept.append(part)
+
+result = ''.join(kept)
+
+# Renumber survivors: 13→11, 14→12, 15→13, 18→14.
+# Two-pass approach: first rename to high placeholders (1013, 1014, …) to avoid
+# collision between old and new numbers, then replace placeholders with finals.
+renumber = {13: 11, 14: 12, 15: 13, 18: 14}
+for old in renumber:
+    placeholder = 1000 + old
+    result = result.replace(f'# ── {old}.', f'# ── {placeholder}.')
+    result = result.replace(f'section "{old}.', f'section "{placeholder}.')
+for old, new in renumber.items():
+    placeholder = 1000 + old
+    result = result.replace(f'# ── {placeholder}.', f'# ── {new}.')
+    result = result.replace(f'section "{placeholder}.', f'section "{new}.')
+
+p.write_text(result)
+
+section_count = len(re.findall(r'^# ── \d+\.', result, re.MULTILINE))
+if section_count != 14:
+    print(f'ERROR: expected 14 sections in validate.sh, got {section_count}', file=sys.stderr)
+    sys.exit(1)
+print(f'  validate.sh: 7 sections removed, {section_count} remain (numbered 1–14)')
+PYEOF
+
 # ── update pnpm-workspace.yaml to only list apps/ ────────────────────────────
 
 info "Updating pnpm-workspace.yaml…"
