@@ -30,6 +30,7 @@ const FRAMEWORK_SCOPE = "@rbrasier";
 const FRAMEWORK_PKGS = ["domain", "shared", "application", "adapters"] as const;
 
 type AiProvider = "anthropic" | "openai" | "mistral";
+type AuthMethod = "magic-link" | "pki" | "pki-and-magic-link" | "google-oauth" | "other" | "none";
 type DbSetup = "local" | "docker" | "url";
 
 interface ScaffoldOptions {
@@ -37,6 +38,7 @@ interface ScaffoldOptions {
   appScope: string;
   aiProvider: AiProvider;
   aiProviderKey: string;
+  authMethod: AuthMethod;
   langfuseEnabled: boolean;
   databaseUrl: string;
   dbSetup: DbSetup;
@@ -113,6 +115,21 @@ async function collectInputs(): Promise<ScaffoldOptions> {
     message: `${AI_KEY_NAMES[aiProvider as AiProvider]} (leave blank to set later)`,
     initial: "",
   });
+
+  const { authMethod } = await prompts({
+    type: "select",
+    name: "authMethod",
+    message: "Authentication method",
+    choices: [
+      { title: "Magic link (email, no password)", value: "magic-link" },
+      { title: "PKI / client certificate", value: "pki" },
+      { title: "PKI + magic link fallback", value: "pki-and-magic-link" },
+      { title: "Google OAuth (requires additional setup)", value: "google-oauth" },
+      { title: "Other (configure manually)", value: "other" },
+      { title: "None (all routes public — dev/internal only)", value: "none" },
+    ],
+  });
+  if (!authMethod) process.exit(0);
 
   const { dbInput } = await prompts({
     type: "text",
@@ -193,6 +210,7 @@ async function collectInputs(): Promise<ScaffoldOptions> {
   console.log(`  Project name   : ${pc.cyan(projectName)}`);
   console.log(`  App scope      : ${pc.cyan(appScope)}`);
   console.log(`  AI provider    : ${pc.cyan(aiProvider)}`);
+  console.log(`  Auth method    : ${pc.cyan(authMethod)}`);
   console.log(`  Database       : ${pc.cyan(databaseUrl)}`);
   console.log(`  Admin email    : ${pc.cyan(adminEmail)}`);
   console.log(`  Langfuse       : ${pc.cyan(String(langfuseEnabled))}`);
@@ -212,6 +230,7 @@ async function collectInputs(): Promise<ScaffoldOptions> {
     appScope,
     aiProvider: aiProvider as AiProvider,
     aiProviderKey: aiProviderKey ?? "",
+    authMethod: authMethod as AuthMethod,
     langfuseEnabled,
     databaseUrl,
     dbSetup,
@@ -230,7 +249,7 @@ function replaceInFile(filePath: string, find: string, replace: string) {
 
 async function scaffold(opts: ScaffoldOptions) {
   const {
-    projectName, appScope, aiProvider, aiProviderKey,
+    projectName, appScope, aiProvider, aiProviderKey, authMethod,
     langfuseEnabled, databaseUrl, dbSetup, adminEmail, authSecret, targetDir,
   } = opts;
 
@@ -324,6 +343,7 @@ async function scaffold(opts: ScaffoldOptions) {
     BETTER_AUTH_SECRET: authSecret,
     ADMIN_SEED_EMAIL: adminEmail,
     AI_DEFAULT_PROVIDER: aiProvider,
+    AUTH_METHOD: authMethod,
     OTEL_SERVICE_NAME: `${projectName}-api`,
   };
 
@@ -402,6 +422,11 @@ try {
   console.log();
   if (!aiProviderKey) {
     console.log(pc.yellow(`  ! Add your ${AI_KEY_NAMES[aiProvider]} to .env before starting.`));
+    console.log();
+  }
+  if (authMethod === "none") {
+    console.log(pc.yellow("  ! Auth method is \"none\" — all /admin/* routes are publicly accessible."));
+    console.log(pc.yellow("    Do not use this setting in production."));
     console.log();
   }
   console.log("  Push to GitHub:");

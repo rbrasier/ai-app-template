@@ -9,6 +9,10 @@ const PKI_MODES = new Set(["pki", "pki-and-magic-link"]);
  * cert headers are consumed server-side; all other modes go to /admin/login.
  */
 export const middleware = (req: NextRequest): NextResponse => {
+  if (AUTH_METHOD === "none") {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
   if (!pathname.startsWith("/admin") || pathname.startsWith("/admin/login")) {
