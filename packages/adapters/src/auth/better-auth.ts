@@ -16,7 +16,8 @@ export type AuthMethod =
       readonly sendMagicLink: (params: { email: string; url: string }) => Promise<void>;
     }
   | { readonly type: "google-oauth" }
-  | { readonly type: "other" };
+  | { readonly type: "other" }
+  | { readonly type: "none" };
 
 export interface AuthConfig {
   readonly secret: string;

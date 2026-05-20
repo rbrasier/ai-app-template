@@ -81,6 +81,8 @@ const build = () => {
         return { type: "google-oauth" as const };
       case "other":
         return { type: "other" as const };
+      case "none":
+        return { type: "none" as const };
       default:
         return { type: "magic-link" as const, sendMagicLink };
     }

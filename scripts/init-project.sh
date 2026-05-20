@@ -119,6 +119,7 @@ echo "    2) pki                (client certificate via reverse proxy)"
 echo "    3) pki-and-magic-link (PKI primary, magic link fallback)"
 echo "    4) google-oauth       (Google OAuth — requires additional setup)"
 echo "    5) other              (configure manually)"
+echo "    6) none               (no auth — all routes public, dev/internal only)"
 prompt "Choice [1]: "
 read -r AUTH_CHOICE
 case "${AUTH_CHOICE:-1}" in
@@ -126,6 +127,7 @@ case "${AUTH_CHOICE:-1}" in
   3) AUTH_METHOD="pki-and-magic-link" ;;
   4) AUTH_METHOD="google-oauth" ;;
   5) AUTH_METHOD="other" ;;
+  6) AUTH_METHOD="none" ;;
   *) AUTH_METHOD="magic-link" ;;
 esac
 
@@ -288,6 +290,10 @@ if [ -f .env.example ]; then
 
   if [ "$AUTH_METHOD" = "google-oauth" ]; then
     warning "google-oauth requires additional setup. See docs/guides/google-oauth.md."
+  fi
+
+  if [ "$AUTH_METHOD" = "none" ]; then
+    warning "none auth selected — all /admin/* routes are publicly accessible. Do not use in production."
   fi
 
   if [ "$LANGFUSE_ENABLED" = "n" ]; then
