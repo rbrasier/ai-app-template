@@ -1,38 +1,41 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { ProgressLink } from "@/components/progress-link";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
         <div className="container flex h-14 items-center gap-6">
-          <Link href="/admin" className="font-semibold">
+          <ProgressLink href="/admin" className="font-semibold">
             Admin
-          </Link>
+          </ProgressLink>
           <nav className="flex gap-4 text-sm">
-            <Link href="/admin/users" className="text-muted-foreground hover:text-foreground">
+            <ProgressLink href="/admin/users" className="text-muted-foreground hover:text-foreground">
               Users
-            </Link>
-            <Link href="/admin/roles" className="text-muted-foreground hover:text-foreground">
+            </ProgressLink>
+            <ProgressLink href="/admin/roles" className="text-muted-foreground hover:text-foreground">
               Roles
-            </Link>
-            <Link href="/admin/errors" className="text-muted-foreground hover:text-foreground">
+            </ProgressLink>
+            <ProgressLink href="/admin/errors" className="text-muted-foreground hover:text-foreground">
               Errors
-            </Link>
-            <Link href="/admin/flags" className="text-muted-foreground hover:text-foreground">
+            </ProgressLink>
+            <ProgressLink href="/admin/flags" className="text-muted-foreground hover:text-foreground">
               Flags
-            </Link>
-            <Link href="/admin/usage" className="text-muted-foreground hover:text-foreground">
+            </ProgressLink>
+            <ProgressLink href="/admin/usage" className="text-muted-foreground hover:text-foreground">
               Usage
-            </Link>
-            <Link href="/admin/settings" className="text-muted-foreground hover:text-foreground">
+            </ProgressLink>
+            <ProgressLink
+              href="/admin/settings"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Settings
-            </Link>
+            </ProgressLink>
           </nav>
           <div className="ml-auto">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+            <ProgressLink href="/" className="text-sm text-muted-foreground hover:text-foreground">
               ← Back to app
-            </Link>
+            </ProgressLink>
           </div>
         </div>
       </header>
