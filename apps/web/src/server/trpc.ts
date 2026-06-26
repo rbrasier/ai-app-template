@@ -1,3 +1,4 @@
+import { hasPermission } from "@rbrasier/domain";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -7,6 +8,7 @@ export interface TrpcContext {
   readonly container: Container;
   readonly userId: string | null;
   readonly isAdmin: boolean;
+  readonly permissions: readonly string[];
   readonly headers: Headers;
 }
 
@@ -22,6 +24,7 @@ export const createTrpcContext = async (req: Request): Promise<TrpcContext> => {
 
   let userId: string | null = null;
   let isAdmin = false;
+  let permissions: readonly string[] = [];
 
   const token = getSessionToken(req);
   if (token) {
@@ -29,10 +32,15 @@ export const createTrpcContext = async (req: Request): Promise<TrpcContext> => {
     if (session) {
       userId = session.userId;
       isAdmin = session.isAdmin;
+      // Admins are a wildcard — skip the lookup; non-admins get their roles' union.
+      if (!isAdmin) {
+        const resolved = await container.useCases.getUserPermissions.execute(session.userId);
+        if (resolved.data) permissions = resolved.data;
+      }
     }
   }
 
-  return { container, userId, isAdmin, headers: req.headers };
+  return { container, userId, isAdmin, permissions, headers: req.headers };
 };
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -72,3 +80,15 @@ export const adminProcedure = publicProcedure.use(({ ctx, next }) => {
   }
   return next();
 });
+
+/**
+ * Gate a procedure behind a single capability. Admins pass unconditionally
+ * (immutable wildcard); everyone else must hold the permission via a role.
+ */
+export const permissionProcedure = (permissionKey: string) =>
+  publicProcedure.use(({ ctx, next }) => {
+    if (!hasPermission(ctx.isAdmin, ctx.permissions, permissionKey)) {
+      throw new TRPCError({ code: "FORBIDDEN", message: `Requires permission: ${permissionKey}.` });
+    }
+    return next();
+  });
