@@ -2,6 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { serverEnv } from "@/lib/env";
 import { AdminLoginForm, type LoginMethods } from "./login-form";
 
+// Enabled sign-in methods come from runtime deploy env, and serverEnv validates
+// DATABASE_URL/BETTER_AUTH_SECRET which are absent at build time — so this page
+// must render per-request, not be statically prerendered.
+export const dynamic = "force-dynamic";
+
 export default function AdminLoginPage() {
   const env = serverEnv();
 
