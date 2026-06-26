@@ -21,5 +21,13 @@ export async function register() {
 
     process.on("uncaughtException", (error) => persist(error, "uncaughtException"));
     process.on("unhandledRejection", (reason) => persist(reason, "unhandledRejection"));
+
+    // Seed the everyone/admin roles and permission catalog once at startup.
+    // Idempotent — safe to run on every boot after migrations have applied.
+    try {
+      await getContainer().seedRbac();
+    } catch (error) {
+      persist(error, "seedRbac");
+    }
   }
 }

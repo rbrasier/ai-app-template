@@ -1,20 +1,28 @@
 import {
+  AssignRoleToUser,
+  CreateRole,
   CreateUser,
+  DeleteRole,
   DeleteUser,
   FailJob,
   GetFeatureFlag,
   GetUsageSummary,
+  GetUserPermissions,
   ListErrors,
   ListFeatureFlags,
   ListJobs,
+  ListPermissions,
+  ListRoles,
   ListUsers,
   LogAuditEvent,
   LogError,
   PingJob,
   RegisterJob,
+  RemoveRoleFromUser,
   SendMessage,
   TrackUsage,
   UpdateErrorStatus,
+  UpdateRole,
   UpdateUser,
   UpsertFeatureFlag,
 } from "@rbrasier/application";
@@ -25,6 +33,8 @@ import {
   DrizzleErrorLogger,
   DrizzleFeatureFlagRepository,
   DrizzleJobRepository,
+  DrizzlePermissionRepository,
+  DrizzleRoleRepository,
   DrizzleUsageRepository,
   DrizzleUserRepository,
   LangGraphAgentRunner,
@@ -34,6 +44,7 @@ import {
   createAuth,
   createDatabase,
   resolveSession,
+  seedRbac,
   withOptionalLangfuse,
   withUsageTracking,
   type AuthMethod,
@@ -48,6 +59,8 @@ const build = () => {
   const logger = new PinoLogger(env.NODE_ENV !== "production");
 
   const users = new DrizzleUserRepository(db);
+  const roles = new DrizzleRoleRepository(db);
+  const permissions = new DrizzlePermissionRepository(db);
   const conversations = new DrizzleConversationRepository(db);
   const errorLogs = new DrizzleErrorLogRepository(db);
   const errorLogger = new DrizzleErrorLogger(errorLogs);
@@ -107,13 +120,22 @@ const build = () => {
     pkiCertAdapter,
     logger,
     resolveSession: (token: string) => resolveSession(db, token),
+    seedRbac: () => seedRbac(db),
     services: { llm, agent, errorLogger, auditLogger },
-    repos: { users, conversations, errorLogs, featureFlags, usageRepo, jobRepo },
+    repos: { users, roles, permissions, conversations, errorLogs, featureFlags, usageRepo, jobRepo },
     useCases: {
       createUser: new CreateUser(users),
       updateUser: new UpdateUser(users),
       deleteUser: new DeleteUser(users),
       listUsers: new ListUsers(users),
+      listRoles: new ListRoles(roles),
+      createRole: new CreateRole(roles),
+      updateRole: new UpdateRole(roles),
+      deleteRole: new DeleteRole(roles),
+      assignRoleToUser: new AssignRoleToUser(roles),
+      removeRoleFromUser: new RemoveRoleFromUser(roles),
+      getUserPermissions: new GetUserPermissions(roles),
+      listPermissions: new ListPermissions(permissions),
       logError: new LogError(errorLogger),
       listErrors: new ListErrors(errorLogs),
       updateErrorStatus: new UpdateErrorStatus(errorLogs),
