@@ -30,7 +30,14 @@ const FRAMEWORK_SCOPE = "@rbrasier";
 const FRAMEWORK_PKGS = ["domain", "shared", "application", "adapters"] as const;
 
 type AiProvider = "anthropic" | "openai" | "mistral";
-type AuthMethod = "magic-link" | "pki" | "pki-and-magic-link" | "google-oauth" | "other" | "none";
+type AuthMethod =
+  | "email-password"
+  | "magic-link"
+  | "pki"
+  | "pki-and-magic-link"
+  | "google-oauth"
+  | "other"
+  | "none";
 type DbSetup = "local" | "docker" | "url";
 
 interface ScaffoldOptions {
@@ -39,6 +46,11 @@ interface ScaffoldOptions {
   aiProvider: AiProvider;
   aiProviderKey: string;
   authMethod: AuthMethod;
+  enableMagicLink: boolean;
+  enableEntra: boolean;
+  entraTenantId: string;
+  entraClientId: string;
+  entraClientSecret: string;
   langfuseEnabled: boolean;
   databaseUrl: string;
   dbSetup: DbSetup;
@@ -121,6 +133,7 @@ async function collectInputs(): Promise<ScaffoldOptions> {
     name: "authMethod",
     message: "Authentication method",
     choices: [
+      { title: "Email + password (default)", value: "email-password" },
       { title: "Magic link (email, no password)", value: "magic-link" },
       { title: "PKI / client certificate", value: "pki" },
       { title: "PKI + magic link fallback", value: "pki-and-magic-link" },
@@ -130,6 +143,30 @@ async function collectInputs(): Promise<ScaffoldOptions> {
     ],
   });
   if (!authMethod) process.exit(0);
+
+  let enableMagicLink = false;
+  let enableEntra = false;
+  let entraTenantId = "";
+  let entraClientId = "";
+  let entraClientSecret = "";
+  if (authMethod === "email-password") {
+    const extras = await prompts([
+      { type: "confirm", name: "magicLink", message: "Also enable magic-link sign-in?", initial: false },
+      { type: "confirm", name: "entra", message: "Also enable Microsoft Entra (Azure AD) sign-in?", initial: false },
+    ]);
+    enableMagicLink = Boolean(extras.magicLink);
+    enableEntra = Boolean(extras.entra);
+    if (enableEntra) {
+      const entra = await prompts([
+        { type: "text", name: "tenantId", message: "Entra tenant ID" },
+        { type: "text", name: "clientId", message: "Entra client ID" },
+        { type: "text", name: "clientSecret", message: "Entra client secret (leave blank to set later)", initial: "" },
+      ]);
+      entraTenantId = entra.tenantId ?? "";
+      entraClientId = entra.clientId ?? "";
+      entraClientSecret = entra.clientSecret ?? "";
+    }
+  }
 
   const { dbInput } = await prompts({
     type: "text",
@@ -211,6 +248,10 @@ async function collectInputs(): Promise<ScaffoldOptions> {
   console.log(`  App scope      : ${pc.cyan(appScope)}`);
   console.log(`  AI provider    : ${pc.cyan(aiProvider)}`);
   console.log(`  Auth method    : ${pc.cyan(authMethod)}`);
+  if (authMethod === "email-password") {
+    console.log(`  Magic-link     : ${pc.cyan(String(enableMagicLink))}`);
+    console.log(`  Entra          : ${pc.cyan(String(enableEntra))}`);
+  }
   console.log(`  Database       : ${pc.cyan(databaseUrl)}`);
   console.log(`  Admin email    : ${pc.cyan(adminEmail)}`);
   console.log(`  Langfuse       : ${pc.cyan(String(langfuseEnabled))}`);
@@ -231,6 +272,11 @@ async function collectInputs(): Promise<ScaffoldOptions> {
     aiProvider: aiProvider as AiProvider,
     aiProviderKey: aiProviderKey ?? "",
     authMethod: authMethod as AuthMethod,
+    enableMagicLink,
+    enableEntra,
+    entraTenantId,
+    entraClientId,
+    entraClientSecret,
     langfuseEnabled,
     databaseUrl,
     dbSetup,
@@ -250,6 +296,7 @@ function replaceInFile(filePath: string, find: string, replace: string) {
 async function scaffold(opts: ScaffoldOptions) {
   const {
     projectName, appScope, aiProvider, aiProviderKey, authMethod,
+    enableMagicLink, enableEntra, entraTenantId, entraClientId, entraClientSecret,
     langfuseEnabled, databaseUrl, dbSetup, adminEmail, authSecret, targetDir,
   } = opts;
 
@@ -344,6 +391,11 @@ async function scaffold(opts: ScaffoldOptions) {
     ADMIN_SEED_EMAIL: adminEmail,
     AI_DEFAULT_PROVIDER: aiProvider,
     AUTH_METHOD: authMethod,
+    AUTH_ENABLE_MAGIC_LINK: String(enableMagicLink),
+    AUTH_ENABLE_ENTRA: String(enableEntra),
+    ENTRA_TENANT_ID: entraTenantId,
+    ENTRA_CLIENT_ID: entraClientId,
+    ENTRA_CLIENT_SECRET: entraClientSecret,
     OTEL_SERVICE_NAME: `${projectName}-api`,
   };
 

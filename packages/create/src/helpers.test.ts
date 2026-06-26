@@ -95,6 +95,28 @@ describe("patchEnvContent", () => {
     const original = patchEnvContent(sample, { NONEXISTENT_KEY: "value" });
     expect(original).toBe(sample);
   });
+
+  it("writes the additive auth options for an email-password project", () => {
+    const authSample = [
+      "AUTH_METHOD=email-password",
+      "AUTH_ENABLE_MAGIC_LINK=false",
+      "AUTH_ENABLE_ENTRA=false",
+      "ENTRA_TENANT_ID=",
+      "ENTRA_CLIENT_ID=",
+      "ENTRA_CLIENT_SECRET=",
+    ].join("\n");
+    const result = patchEnvContent(authSample, {
+      AUTH_ENABLE_MAGIC_LINK: "true",
+      AUTH_ENABLE_ENTRA: "true",
+      ENTRA_TENANT_ID: "tenant-123",
+      ENTRA_CLIENT_ID: "client-123",
+    });
+    expect(result).toContain("AUTH_ENABLE_MAGIC_LINK=true");
+    expect(result).toContain("AUTH_ENABLE_ENTRA=true");
+    expect(result).toContain("ENTRA_TENANT_ID=tenant-123");
+    expect(result).toContain("ENTRA_CLIENT_ID=client-123");
+    expect(result).toContain("ENTRA_CLIENT_SECRET=");
+  });
 });
 
 describe("buildPackFilename", () => {

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_METHOD = process.env.AUTH_METHOD ?? "magic-link";
+const AUTH_METHOD = process.env.AUTH_METHOD ?? "email-password";
 const PKI_MODES = new Set(["pki", "pki-and-magic-link"]);
 
 /**

@@ -47,7 +47,7 @@ import {
   seedRbac,
   withOptionalLangfuse,
   withUsageTracking,
-  type AuthMethod,
+  type AuthMethodsConfig,
 } from "@rbrasier/adapters";
 import { serverEnv } from "./env";
 
@@ -81,25 +81,27 @@ const build = () => {
     sessionTtlHours: env.PKI_SESSION_TTL_HOURS,
   };
 
-  const authMethod: AuthMethod = (() => {
-    const sendMagicLink = async ({ email, url }: { email: string; url: string }) => {
-      logger.info(`[auth] magic link for ${email}: ${url}`);
-    };
-    switch (env.AUTH_METHOD) {
-      case "pki":
-        return { type: "pki" as const, pkiConfig };
-      case "pki-and-magic-link":
-        return { type: "pki-and-magic-link" as const, pkiConfig, sendMagicLink };
-      case "google-oauth":
-        return { type: "google-oauth" as const };
-      case "other":
-        return { type: "other" as const };
-      case "none":
-        return { type: "none" as const };
-      default:
-        return { type: "magic-link" as const, sendMagicLink };
-    }
-  })();
+  const sendMagicLink = async ({ email, url }: { email: string; url: string }) => {
+    logger.info(`[auth] magic link for ${email}: ${url}`);
+  };
+
+  const magicLinkEnabled =
+    env.AUTH_METHOD === "magic-link" ||
+    env.AUTH_METHOD === "pki-and-magic-link" ||
+    env.AUTH_ENABLE_MAGIC_LINK;
+
+  const authMethods: AuthMethodsConfig = {
+    emailPassword: env.AUTH_METHOD === "email-password",
+    magicLink: magicLinkEnabled ? { sendMagicLink } : undefined,
+    entra:
+      env.AUTH_ENABLE_ENTRA && env.ENTRA_TENANT_ID && env.ENTRA_CLIENT_ID && env.ENTRA_CLIENT_SECRET
+        ? {
+            tenantId: env.ENTRA_TENANT_ID,
+            clientId: env.ENTRA_CLIENT_ID,
+            clientSecret: env.ENTRA_CLIENT_SECRET,
+          }
+        : undefined,
+  };
 
   const pkiCertAdapter =
     env.AUTH_METHOD === "pki" || env.AUTH_METHOD === "pki-and-magic-link"
@@ -110,7 +112,7 @@ const build = () => {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     adminSeedEmail: env.ADMIN_SEED_EMAIL,
-    authMethod,
+    methods: authMethods,
   });
 
   return {
