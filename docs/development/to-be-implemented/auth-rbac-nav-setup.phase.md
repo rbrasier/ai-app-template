@@ -48,7 +48,33 @@ every app built from the template.
   and role assignment on `/admin/users`.
 - Navigation progress bar mounted in the root layout via native `useLinkStatus`.
 - Tests for every new adapter, use case, policy, and route; `.env.example`,
-  `init-project.sh` auth menu, and `VERSION`/`package.json` updated.
+  **both installers** (`scripts/init-project.sh` and `packages/create`), and
+  `VERSION`/`package.json` updated.
+
+### Installer coverage (both bootstrappers)
+
+The new configuration options must be selectable at project creation, in **both**
+installers, which each carry their own auth prompt:
+
+- `scripts/init-project.sh` — in-place bash initializer.
+- `packages/create/src/index.ts` — the published `create-ai-app-template` npx
+  bootstrapper (with `helpers.ts` / `helpers.test.ts`).
+
+Both must:
+1. Offer **email+password** as the default/first auth choice (replacing
+   magic-link as the default), keeping `pki`, `pki-and-magic-link`, `none`,
+   `other`, and the `google-oauth` stub.
+2. When a credential base is chosen, prompt for additive options
+   **magic-link** (y/N) and **Entra** (y/N), writing `AUTH_ENABLE_MAGIC_LINK`
+   and `AUTH_ENABLE_ENTRA` to the generated `.env`/`.env.example`.
+3. When Entra is enabled, prompt for `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, and
+   `ENTRA_CLIENT_SECRET` (secret may be left blank to fill in later) and write
+   them, plus a warning to complete the Azure app registration and redirect URI.
+4. Echo the resolved auth configuration in the pre-flight summary both
+   installers already print.
+
+`packages/create`'s `AuthMethod` type and the bash `case` mapping must both gain
+`email-password`. `helpers.test.ts` is updated to cover the new env writes.
 
 ### Out of scope
 
@@ -176,8 +202,13 @@ schema mapping (verify the mapping mechanism in node_modules).
 - `components/navigation-progress.tsx` + `components/progress-link.tsx`; mount in
   root layout; switch nav links to `ProgressLink`.
 
-### 9. Config, seeding wiring, docs, version
-- `.env.example` new vars + comments; `init-project.sh` auth menu update.
+### 9. Config, installers, seeding wiring, docs, version
+- `.env.example` new vars + comments.
+- **`scripts/init-project.sh`**: email+password default; additive magic-link /
+  Entra prompts; Entra OIDC fields; write the new env vars + summary line.
+- **`packages/create/src/index.ts`** (+ `helpers.ts`/`helpers.test.ts`): same
+  prompts; extend the `AuthMethod` type with `email-password`; write env
+  replacements for the new vars; update the pre-flight summary.
 - Call `seedRbac` in containers after migrations.
 - Bump `VERSION` + root `package.json` to `1.1.0`; changeset entry.
 - Move this phase doc to `docs/development/implemented/v1.1.0/` with an
@@ -280,5 +311,7 @@ schema mapping (verify the mapping mechanism in node_modules).
 | `apps/web/src/components/{navigation-progress,progress-link}.tsx` | New |
 | `apps/api/src/container.ts` | seedRbac + role repos |
 | `.env.example` | new vars |
-| `scripts/init-project.sh` | auth menu |
+| `scripts/init-project.sh` | email+password default; magic-link/Entra prompts; Entra fields; env writes |
+| `packages/create/src/index.ts` | `AuthMethod` += `email-password`; new prompts + env replacements |
+| `packages/create/src/helpers.ts` (+ `.test.ts`) | env-write helpers for new auth vars |
 | `VERSION`, `package.json`, `.changeset/*` | `1.1.0` + changeset |

@@ -91,6 +91,10 @@ every app built from the template.
   context carries the caller's resolved permissions.
 - `apps/api` — `/v1/*` unchanged in this phase (RBAC is enforced in the web/tRPC
   layer first; API parity is future work, see §11).
+- **Installers** — both `scripts/init-project.sh` and `packages/create`
+  (`create-ai-app-template`) gain prompts for the new auth options
+  (email+password default; magic-link/Entra toggles; Entra OIDC fields) and
+  write the corresponding env vars.
 
 ## 8. Database changes
 
