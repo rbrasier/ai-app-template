@@ -1,5 +1,14 @@
 import { sql } from "drizzle-orm";
-import { boolean, jsonb, pgTable, real, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  pgTable,
+  real,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const core_users = pgTable("core_users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -42,6 +51,61 @@ export const core_audit_log = pgTable("core_audit_log", {
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const core_roles = pgTable("core_roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  // System roles (everyone, admin) cannot be deleted; the admin role is also immutable.
+  is_system: boolean("is_system").notNull().default(false),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const core_permissions = pgTable("core_permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  description: text("description"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const core_role_permissions = pgTable(
+  "core_role_permissions",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    role_id: uuid("role_id")
+      .notNull()
+      .references(() => core_roles.id, { onDelete: "cascade" }),
+    permission_id: uuid("permission_id")
+      .notNull()
+      .references(() => core_permissions.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    role_permission_unique: unique().on(table.role_id, table.permission_id),
+  }),
+);
+
+export const core_user_roles = pgTable(
+  "core_user_roles",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    user_id: uuid("user_id")
+      .notNull()
+      .references(() => core_users.id, { onDelete: "cascade" }),
+    role_id: uuid("role_id")
+      .notNull()
+      .references(() => core_roles.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    user_role_unique: unique().on(table.user_id, table.role_id),
+  }),
+);
 
 export const core_feature_flag = pgTable("core_feature_flag", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

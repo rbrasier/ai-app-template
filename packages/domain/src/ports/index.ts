@@ -1,4 +1,6 @@
 export * from "./user-repository";
+export * from "./role-repository";
+export * from "./permission-repository";
 export * from "./error-log-repository";
 export * from "./conversation-repository";
 export * from "./language-model";

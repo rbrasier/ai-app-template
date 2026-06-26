@@ -1,4 +1,6 @@
 export * from "./user";
+export * from "./role";
+export * from "./permission";
 export * from "./error-log";
 export * from "./conversation";
 export * from "./audit-log";
