@@ -12,3 +12,6 @@ export * from "./get-feature-flag";
 export * from "./track-usage";
 export * from "./job-health";
 export * from "./get-system-health";
+export * from "./approve-user";
+export * from "./reject-user";
+export * from "./list-pending-users";

@@ -29,14 +29,19 @@ const extractMeta = (
 };
 
 export class LanguageModelAdapter implements ILanguageModel {
-  constructor(public readonly provider: ProviderName) {}
+  // apiKey, when present, comes from the runtime settings store and overrides the
+  // provider's env-var key for this instance.
+  constructor(
+    public readonly provider: ProviderName,
+    private readonly apiKey?: string,
+  ) {}
 
   async generateObject<T>(
     input: GenerateObjectInput,
   ): Promise<Result<{ object: T; usage: TokenUsage }>> {
     try {
       const result = await generateObject({
-        model: resolveModel(this.provider, input.model),
+        model: resolveModel(this.provider, input.model, this.apiKey),
         schema: input.schema as never,
         system: input.system,
         prompt: input.prompt,
@@ -66,7 +71,7 @@ export class LanguageModelAdapter implements ILanguageModel {
   ): Promise<Result<{ textStream: AsyncIterable<string>; usage: Promise<TokenUsage> }>> {
     try {
       const result = streamText({
-        model: resolveModel(this.provider, input.model),
+        model: resolveModel(this.provider, input.model, this.apiKey),
         system: input.system,
         prompt: input.prompt,
         messages: input.messages as never,
@@ -97,7 +102,7 @@ export class LanguageModelAdapter implements ILanguageModel {
   > {
     try {
       const result = streamObject({
-        model: resolveModel(this.provider, input.model),
+        model: resolveModel(this.provider, input.model, this.apiKey),
         schema: input.schema as never,
         system: input.system,
         prompt: input.prompt,

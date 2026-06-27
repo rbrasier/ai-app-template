@@ -17,6 +17,7 @@ const toEntity = (row: typeof core_users.$inferSelect): User => ({
   email: row.email,
   name: row.name,
   isAdmin: row.is_admin,
+  status: row.status,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -32,6 +33,7 @@ export class DrizzleUserRepository implements IUserRepository {
           email: input.email,
           name: input.name ?? null,
           is_admin: input.isAdmin ?? false,
+          ...(input.status !== undefined ? { status: input.status } : {}),
         })
         .returning();
       if (!row) return err(domainError("INFRA_FAILURE", "User insert returned no row."));
@@ -80,6 +82,7 @@ export class DrizzleUserRepository implements IUserRepository {
           ...(patch.email !== undefined ? { email: patch.email } : {}),
           ...(patch.name !== undefined ? { name: patch.name } : {}),
           ...(patch.isAdmin !== undefined ? { is_admin: patch.isAdmin } : {}),
+          ...(patch.status !== undefined ? { status: patch.status } : {}),
           updated_at: new Date(),
         })
         .where(eq(core_users.id, id))

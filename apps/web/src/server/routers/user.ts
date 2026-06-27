@@ -3,9 +3,12 @@ import {
   deleteUserInputSchema,
   listUsersInputSchema,
   updateUserInputSchema,
+  userIdInputSchema,
 } from "@rbrasier/shared";
 import { TRPCError } from "@trpc/server";
-import { adminProcedure, router } from "../trpc";
+import { adminProcedure, permissionProcedure, router } from "../trpc";
+
+const manageUsers = permissionProcedure("users.write");
 
 export const userRouter = router({
   list: adminProcedure.input(listUsersInputSchema).query(async ({ ctx, input }) => {
@@ -40,5 +43,29 @@ export const userRouter = router({
       throw new TRPCError({ code, message: result.error.message });
     }
     return { ok: true };
+  }),
+
+  listPending: manageUsers.query(async ({ ctx }) => {
+    const result = await ctx.container.useCases.listPendingUsers.execute();
+    if (result.error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error.message });
+    return result.data;
+  }),
+
+  approve: manageUsers.input(userIdInputSchema).mutation(async ({ ctx, input }) => {
+    const result = await ctx.container.useCases.approveUser.execute(input.id);
+    if (result.error) {
+      const code = result.error.code === "NOT_FOUND" ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR";
+      throw new TRPCError({ code, message: result.error.message });
+    }
+    return result.data;
+  }),
+
+  reject: manageUsers.input(userIdInputSchema).mutation(async ({ ctx, input }) => {
+    const result = await ctx.container.useCases.rejectUser.execute(input.id);
+    if (result.error) {
+      const code = result.error.code === "NOT_FOUND" ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR";
+      throw new TRPCError({ code, message: result.error.message });
+    }
+    return result.data;
   }),
 });

@@ -13,6 +13,12 @@ export function generateSecret(): string {
   return randomBytes(32).toString("base64url");
 }
 
+// Standard base64 (not base64url) so it decodes cleanly to 32 bytes for the
+// app's AES-256 settings cipher.
+export function generateEncryptionKey(): string {
+  return randomBytes(32).toString("base64");
+}
+
 export function isDatabaseUrl(value: string): boolean {
   return value.includes("://");
 }

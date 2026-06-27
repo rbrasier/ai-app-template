@@ -9,4 +9,7 @@ export * from "./logging/index";
 export * from "./audit/index";
 export * from "./health/index";
 export * from "./telemetry/index";
+export * from "./crypto/index";
+export * from "./mail/index";
+export * from "./settings/index";
 export * from "./factory";

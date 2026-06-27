@@ -17,6 +17,10 @@ export const deleteUserInputSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const userIdInputSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const listUsersInputSchema = z.object({
   limit: z.number().int().min(1).max(200).optional(),
   offset: z.number().int().min(0).optional(),
@@ -25,4 +29,5 @@ export const listUsersInputSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserInputSchema>;
 export type DeleteUserInput = z.infer<typeof deleteUserInputSchema>;
+export type UserIdInput = z.infer<typeof userIdInputSchema>;
 export type ListUsersInput = z.infer<typeof listUsersInputSchema>;

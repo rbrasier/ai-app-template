@@ -21,6 +21,7 @@ class InMemoryUsers implements IUserRepository {
       email: input.email,
       name: input.name ?? null,
       isAdmin: input.isAdmin ?? false,
+      status: input.status ?? "active",
       createdAt: now,
       updatedAt: now,
     };

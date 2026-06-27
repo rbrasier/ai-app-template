@@ -361,6 +361,16 @@ git commit -q -m "chore: initial commit from ai-app-template v${FRAMEWORK_VERSIO
 if [ -f .env.example ] && [ ! -f .env ]; then
   info "Copying .env.example → .env…"
   cp .env.example .env
+
+  # Generate the settings-secret encryption key (base64, 32 bytes). Without it,
+  # the app falls back to an ephemeral dev key and is invalid in production.
+  if command -v openssl >/dev/null 2>&1; then
+    ENCRYPTION_KEY="$(openssl rand -base64 32)"
+    sed_inplace "s|APP_SETTINGS_ENCRYPTION_KEY=|APP_SETTINGS_ENCRYPTION_KEY=${ENCRYPTION_KEY}|g" .env
+    info "Generated APP_SETTINGS_ENCRYPTION_KEY in .env."
+  else
+    warning "openssl not found — set APP_SETTINGS_ENCRYPTION_KEY in .env (openssl rand -base64 32)."
+  fi
 fi
 
 # ── write version tracking files ─────────────────────────────────────────────
@@ -408,4 +418,5 @@ echo "    7. Push to GitHub:         git remote add origin <url> && git push -u 
 echo
 echo "  Once infrastructure is up, run ./validate.sh to confirm everything passes."
 echo "  Admin login is seeded from ADMIN_SEED_EMAIL in .env."
+echo "  Runtime config (login methods, AI provider/keys) is managed at /admin/settings."
 echo

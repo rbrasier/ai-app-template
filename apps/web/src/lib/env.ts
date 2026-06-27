@@ -37,14 +37,37 @@ const serverEnvSchema = z.object({
   ENTRA_CLIENT_SECRET: z.string().optional(),
   PKI_TRUSTED_PROXY_IPS: z.string().optional(),
   PKI_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(8),
+  // base64 that decodes to 32 bytes; encrypts settings secrets at rest. Required
+  // in production; a dev-only ephemeral key is generated when unset.
+  APP_SETTINGS_ENCRYPTION_KEY: z.string().optional(),
 }).superRefine((env, ctx) => {
-  if (!env.AUTH_ENABLE_ENTRA) return;
-  for (const key of ["ENTRA_TENANT_ID", "ENTRA_CLIENT_ID", "ENTRA_CLIENT_SECRET"] as const) {
-    if (!env[key]) {
+  if (env.AUTH_ENABLE_ENTRA) {
+    for (const key of ["ENTRA_TENANT_ID", "ENTRA_CLIENT_ID", "ENTRA_CLIENT_SECRET"] as const) {
+      if (!env[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} is required when AUTH_ENABLE_ENTRA is true.`,
+        });
+      }
+    }
+  }
+
+  if (env.NODE_ENV === "production" && !env.APP_SETTINGS_ENCRYPTION_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["APP_SETTINGS_ENCRYPTION_KEY"],
+      message: "APP_SETTINGS_ENCRYPTION_KEY is required in production.",
+    });
+  }
+
+  if (env.APP_SETTINGS_ENCRYPTION_KEY) {
+    const decodedLength = Buffer.from(env.APP_SETTINGS_ENCRYPTION_KEY, "base64").length;
+    if (decodedLength !== 32) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: [key],
-        message: `${key} is required when AUTH_ENABLE_ENTRA is true.`,
+        path: ["APP_SETTINGS_ENCRYPTION_KEY"],
+        message: "APP_SETTINGS_ENCRYPTION_KEY must be base64 that decodes to 32 bytes.",
       });
     }
   }

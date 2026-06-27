@@ -12,7 +12,8 @@ import { publicProcedure, router } from "../trpc";
  */
 export const messageRouter = router({
   send: publicProcedure.input(sendMessageInputSchema).mutation(async function* ({ ctx, input }) {
-    const result = await ctx.container.useCases.sendMessage.execute({
+    const sendMessage = await ctx.container.resolveSendMessage();
+    const result = await sendMessage.execute({
       prompt: input.prompt,
       userId: ctx.userId,
       conversationId: input.conversationId,

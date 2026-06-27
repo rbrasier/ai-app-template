@@ -8,3 +8,4 @@ export * from "./feature-flag";
 export * from "./usage-event";
 export * from "./job";
 export * from "./system-health";
+export * from "./app-settings";
