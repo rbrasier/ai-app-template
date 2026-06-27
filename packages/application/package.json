@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/application",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "type": "module",
   "description": "Framework use cases — orchestrates port interfaces from @rbrasier/domain. No framework dependencies.",
   "main": "./src/index.ts",
@@ -37,8 +37,8 @@
     "@rbrasier/shared": "workspace:*"
   },
   "peerDependencies": {
-    "@rbrasier/domain": ">=1.0.3",
-    "@rbrasier/shared": ">=1.0.3"
+    "@rbrasier/domain": ">=2.0.0",
+    "@rbrasier/shared": ">=2.0.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.0",
