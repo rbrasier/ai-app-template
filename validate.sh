@@ -371,6 +371,13 @@ else
   fail "restart.sh does not set PGPASSWORD — createdb may prompt for a password and block unattended runs"
 fi
 
+# ── 22. production build ──────────────────────────────────────────────────────
+section "22. pnpm build (production build incl. next build / prerender)"
+# typecheck (tsc --noEmit) does not exercise the Next.js production build, so
+# prerender-time failures (e.g. a server component reading env during static
+# generation) slip past sections 1–3. This runs the same `pnpm build` CI does.
+if pnpm -s build; then pass "production build"; else fail "production build"; fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo
 echo "──────────────────────────────────────────"

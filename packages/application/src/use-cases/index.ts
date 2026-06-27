@@ -1,4 +1,5 @@
 export * from "./create-user";
+export * from "./roles";
 export * from "./update-user";
 export * from "./delete-user";
 export * from "./list-users";

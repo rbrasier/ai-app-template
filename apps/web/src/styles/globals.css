@@ -54,3 +54,17 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+  @keyframes nav-progress-indeterminate {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+  .animate-nav-progress {
+    animation: nav-progress-indeterminate 1s ease-in-out infinite;
+  }
+}

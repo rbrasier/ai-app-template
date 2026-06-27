@@ -114,22 +114,48 @@ esac
 # Auth method
 echo
 echo "  Authentication method:"
-echo "    1) magic-link         (email magic link — no password)"
-echo "    2) pki                (client certificate via reverse proxy)"
-echo "    3) pki-and-magic-link (PKI primary, magic link fallback)"
-echo "    4) google-oauth       (Google OAuth — requires additional setup)"
-echo "    5) other              (configure manually)"
-echo "    6) none               (no auth — all routes public, dev/internal only)"
+echo "    1) email-password     (email + password — default)"
+echo "    2) magic-link         (email magic link — no password)"
+echo "    3) pki                (client certificate via reverse proxy)"
+echo "    4) pki-and-magic-link (PKI primary, magic link fallback)"
+echo "    5) google-oauth       (Google OAuth — requires additional setup)"
+echo "    6) other              (configure manually)"
+echo "    7) none               (no auth — all routes public, dev/internal only)"
 prompt "Choice [1]: "
 read -r AUTH_CHOICE
 case "${AUTH_CHOICE:-1}" in
-  2) AUTH_METHOD="pki" ;;
-  3) AUTH_METHOD="pki-and-magic-link" ;;
-  4) AUTH_METHOD="google-oauth" ;;
-  5) AUTH_METHOD="other" ;;
-  6) AUTH_METHOD="none" ;;
-  *) AUTH_METHOD="magic-link" ;;
+  2) AUTH_METHOD="magic-link" ;;
+  3) AUTH_METHOD="pki" ;;
+  4) AUTH_METHOD="pki-and-magic-link" ;;
+  5) AUTH_METHOD="google-oauth" ;;
+  6) AUTH_METHOD="other" ;;
+  7) AUTH_METHOD="none" ;;
+  *) AUTH_METHOD="email-password" ;;
 esac
+
+# Additive options when the base is email+password
+AUTH_ENABLE_MAGIC_LINK="false"
+AUTH_ENABLE_ENTRA="false"
+ENTRA_TENANT_ID=""
+ENTRA_CLIENT_ID=""
+ENTRA_CLIENT_SECRET=""
+if [ "$AUTH_METHOD" = "email-password" ]; then
+  prompt "  Also enable magic-link sign-in? [y/N]: "
+  read -r ENABLE_ML
+  [ "$ENABLE_ML" = "y" ] || [ "$ENABLE_ML" = "Y" ] && AUTH_ENABLE_MAGIC_LINK="true"
+
+  prompt "  Also enable Microsoft Entra (Azure AD) sign-in? [y/N]: "
+  read -r ENABLE_ENTRA
+  if [ "$ENABLE_ENTRA" = "y" ] || [ "$ENABLE_ENTRA" = "Y" ]; then
+    AUTH_ENABLE_ENTRA="true"
+    prompt "    Entra tenant ID: "
+    read -r ENTRA_TENANT_ID
+    prompt "    Entra client ID: "
+    read -r ENTRA_CLIENT_ID
+    prompt "    Entra client secret (leave blank to fill in later): "
+    read -r ENTRA_CLIENT_SECRET
+  fi
+fi
 
 # Langfuse
 echo
@@ -152,6 +178,8 @@ echo "  Framework scope  : $FRAMEWORK_SCOPE (published npm packages — unchange
 echo "  Framework ver    : $FRAMEWORK_VERSION"
 echo "  AI provider      : $AI_PROVIDER"
 echo "  Auth method      : $AUTH_METHOD"
+echo "  Magic-link extra : $AUTH_ENABLE_MAGIC_LINK"
+echo "  Entra extra      : $AUTH_ENABLE_ENTRA"
 echo "  Langfuse         : $LANGFUSE_ENABLED"
 echo
 prompt "Proceed? [y/N]: "
@@ -279,7 +307,16 @@ if [ -f .env.example ]; then
   sed_inplace "s|APP_NAME=template|APP_NAME=${PROJECT_NAME}|g"                         .env.example
   sed_inplace "s|/template|/${PROJECT_NAME}|g"                                          .env.example
   sed_inplace "s|AI_DEFAULT_PROVIDER=anthropic|AI_DEFAULT_PROVIDER=${AI_PROVIDER}|g"   .env.example
-  sed_inplace "s|AUTH_METHOD=magic-link|AUTH_METHOD=${AUTH_METHOD}|g"                  .env.example
+  sed_inplace "s|AUTH_METHOD=email-password|AUTH_METHOD=${AUTH_METHOD}|g"              .env.example
+  sed_inplace "s|AUTH_ENABLE_MAGIC_LINK=false|AUTH_ENABLE_MAGIC_LINK=${AUTH_ENABLE_MAGIC_LINK}|g" .env.example
+  sed_inplace "s|AUTH_ENABLE_ENTRA=false|AUTH_ENABLE_ENTRA=${AUTH_ENABLE_ENTRA}|g"     .env.example
+  sed_inplace "s|ENTRA_TENANT_ID=|ENTRA_TENANT_ID=${ENTRA_TENANT_ID}|g"                .env.example
+  sed_inplace "s|ENTRA_CLIENT_ID=|ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID}|g"                .env.example
+  sed_inplace "s|ENTRA_CLIENT_SECRET=|ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET}|g"    .env.example
+
+  if [ "$AUTH_ENABLE_ENTRA" = "true" ]; then
+    warning "Entra enabled — register the redirect URI <BETTER_AUTH_URL>/api/auth/oauth2/callback/microsoft-entra-id in Azure."
+  fi
 
   # PKI: comment out PKI vars when not using PKI
   if [[ "$AUTH_METHOD" != "pki" && "$AUTH_METHOD" != "pki-and-magic-link" ]]; then
