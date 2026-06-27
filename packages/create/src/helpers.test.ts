@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDatabaseUrl,
   buildPackFilename,
+  generateEncryptionKey,
   generateSecret,
   isDatabaseUrl,
   isDirectoryEmpty,
@@ -23,6 +24,16 @@ describe("generateSecret", () => {
   it("produces at least 40 characters of output from 32 random bytes", () => {
     // base64url of 32 bytes = 43 chars (no padding)
     expect(generateSecret().length).toBeGreaterThanOrEqual(40);
+  });
+});
+
+describe("generateEncryptionKey", () => {
+  it("decodes to exactly 32 bytes for AES-256", () => {
+    expect(Buffer.from(generateEncryptionKey(), "base64").length).toBe(32);
+  });
+
+  it("returns a different value each call", () => {
+    expect(generateEncryptionKey()).not.toBe(generateEncryptionKey());
   });
 });
 

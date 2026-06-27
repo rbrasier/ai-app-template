@@ -26,6 +26,74 @@ interface FormState {
 
 const empty: FormState = { email: "", name: "", isAdmin: false };
 
+const statusVariant: Record<User["status"], "default" | "outline" | "destructive"> = {
+  active: "default",
+  pending: "outline",
+  rejected: "destructive",
+};
+
+function PendingApprovals() {
+  const utils = trpc.useUtils();
+  const pendingQuery = trpc.user.listPending.useQuery();
+  const invalidate = () => {
+    void utils.user.listPending.invalidate();
+    void utils.user.list.invalidate();
+  };
+  const approve = trpc.user.approve.useMutation({ onSuccess: invalidate });
+  const reject = trpc.user.reject.useMutation({ onSuccess: invalidate });
+
+  if (pendingQuery.isLoading) return null;
+  if (!pendingQuery.data || pendingQuery.data.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Pending approvals</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Email</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Requested</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pendingQuery.data.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-mono text-xs">{user.email}</TableCell>
+                <TableCell>{user.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="space-x-2 text-right">
+                  <Button
+                    size="sm"
+                    disabled={approve.isPending}
+                    onClick={() => approve.mutate({ id: user.id })}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={reject.isPending}
+                    onClick={() => reject.mutate({ id: user.id })}
+                  >
+                    Reject
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminUsersPage() {
   const utils = trpc.useUtils();
   const usersQuery = trpc.user.list.useQuery({});
@@ -61,141 +129,143 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle>Users</CardTitle>
-        <Button onClick={() => setEditing({ ...empty })}>Add user</Button>
-      </CardHeader>
-      <CardContent>
-        {usersQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usersQuery.data?.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.name ?? "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{u.email}</TableCell>
-                  <TableCell>
-                    {u.isAdmin && <Badge>admin</Badge>}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="space-x-2 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setEditing({
-                          id: u.id,
-                          email: u.email,
-                          name: u.name ?? "",
-                          isAdmin: u.isAdmin,
-                        })
-                      }
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => setConfirmDelete(u)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
+    <div className="space-y-6">
+      <PendingApprovals />
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle>Users</CardTitle>
+          <Button onClick={() => setEditing({ ...empty })}>Add user</Button>
+        </CardHeader>
+        <CardContent>
+          {usersQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Admin</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-
-      <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Edit user" : "Add user"}</DialogTitle>
-          </DialogHeader>
-          {editing && (
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void onSubmit(editing);
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={editing.email}
-                  onChange={(e) => setEditing({ ...editing, email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={editing.name}
-                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editing.isAdmin}
-                  onChange={(e) => setEditing({ ...editing, isAdmin: e.target.checked })}
-                />
-                Admin
-              </label>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save</Button>
-              </DialogFooter>
-            </form>
+              </TableHeader>
+              <TableBody>
+                {usersQuery.data?.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell>{u.name ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{u.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[u.status]}>{u.status}</Badge>
+                    </TableCell>
+                    <TableCell>{u.isAdmin && <Badge>admin</Badge>}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="space-x-2 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setEditing({
+                            id: u.id,
+                            email: u.email,
+                            name: u.name ?? "",
+                            isAdmin: u.isAdmin,
+                          })
+                        }
+                      >
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(u)}>
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </DialogContent>
-      </Dialog>
+        </CardContent>
 
-      <Dialog open={confirmDelete !== null} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete user?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            This will permanently remove <strong>{confirmDelete?.email}</strong>.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                if (!confirmDelete) return;
-                await deleteMutation.mutateAsync({ id: confirmDelete.id });
-                setConfirmDelete(null);
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+        <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editing?.id ? "Edit user" : "Add user"}</DialogTitle>
+            </DialogHeader>
+            {editing && (
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void onSubmit(editing);
+                }}
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={editing.email}
+                    onChange={(e) => setEditing({ ...editing, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={editing.name}
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editing.isAdmin}
+                    onChange={(e) => setEditing({ ...editing, isAdmin: e.target.checked })}
+                  />
+                  Admin
+                </label>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save</Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={confirmDelete !== null} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete user?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              This will permanently remove <strong>{confirmDelete?.email}</strong>.
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  if (!confirmDelete) return;
+                  await deleteMutation.mutateAsync({ id: confirmDelete.id });
+                  setConfirmDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </Card>
+    </div>
   );
 }

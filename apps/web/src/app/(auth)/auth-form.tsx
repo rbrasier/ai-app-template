@@ -4,23 +4,28 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProgressLink } from "@/components/progress-link";
 import { ENTRA_PROVIDER_ID, authClient } from "@/lib/auth-client";
 
-export interface LoginMethods {
+export interface AuthMethods {
   readonly emailPassword: boolean;
   readonly magicLink: boolean;
   readonly entra: boolean;
   readonly isDev: boolean;
 }
 
-const CALLBACK_URL = "/admin";
+interface AuthFormProps {
+  readonly methods: AuthMethods;
+  readonly mode: "sign-in" | "sign-up";
+  readonly next: string;
+}
 
-export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
+export function AuthForm({ methods, mode, next }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,7 +44,7 @@ export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
   const onPasswordSubmit = (event: FormEvent): void => {
     event.preventDefault();
     void run(async () => {
-      if (methods.isDev) {
+      if (methods.isDev && mode === "sign-in") {
         const response = await fetch("/api/dev-login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -49,28 +54,37 @@ export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
           const body = (await response.json()) as { error?: string };
           throw new Error(body.error ?? "Login failed");
         }
-        window.location.href = CALLBACK_URL;
+        window.location.href = next;
         return;
       }
-      const result =
-        mode === "sign-up"
-          ? await authClient.signUp.email({ email, password, name: name || email })
-          : await authClient.signIn.email({ email, password, callbackURL: CALLBACK_URL });
+
+      if (mode === "sign-up") {
+        const result = await authClient.signUp.email({ email, password, name: name || email });
+        if (result.error) {
+          // A blocked session after sign-up means the account is pending approval.
+          setNotice(result.error.message ?? "Registration submitted — awaiting approval.");
+          return;
+        }
+        window.location.href = next;
+        return;
+      }
+
+      const result = await authClient.signIn.email({ email, password, callbackURL: next });
       if (result.error) throw new Error(result.error.message ?? "Login failed");
-      window.location.href = CALLBACK_URL;
+      window.location.href = next;
     });
   };
 
   const onMagicLink = (): void =>
     void run(async () => {
-      const result = await authClient.signIn.magicLink({ email, callbackURL: CALLBACK_URL });
+      const result = await authClient.signIn.magicLink({ email, callbackURL: next });
       if (result.error) throw new Error(result.error.message ?? "Could not send magic link");
       setMagicLinkSent(true);
     });
 
   const onEntra = (): void =>
     void run(async () => {
-      await authClient.signIn.oauth2({ providerId: ENTRA_PROVIDER_ID, callbackURL: CALLBACK_URL });
+      await authClient.signIn.oauth2({ providerId: ENTRA_PROVIDER_ID, callbackURL: next });
     });
 
   if (magicLinkSent) {
@@ -81,7 +95,11 @@ export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
     );
   }
 
-  const showPasswordField = methods.emailPassword && !methods.isDev;
+  if (notice) {
+    return <p className="text-sm text-muted-foreground">{notice}</p>;
+  }
+
+  const showPasswordField = methods.emailPassword && !(methods.isDev && mode === "sign-in");
 
   return (
     <div className="space-y-4">
@@ -121,27 +139,15 @@ export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting
                 ? "Working…"
-                : methods.isDev
-                  ? "Sign in"
-                  : mode === "sign-up"
-                    ? "Create account"
-                    : "Sign in"}
+                : mode === "sign-up"
+                  ? "Create account"
+                  : "Sign in"}
             </Button>
           )}
         </form>
       )}
 
-      {methods.emailPassword && !methods.isDev && (
-        <button
-          type="button"
-          className="text-xs text-muted-foreground underline"
-          onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-        >
-          {mode === "sign-in" ? "Need an account? Sign up" : "Have an account? Sign in"}
-        </button>
-      )}
-
-      {methods.magicLink && !methods.isDev && (
+      {methods.magicLink && !(methods.isDev && mode === "sign-in") && (
         <Button variant="outline" className="w-full" disabled={submitting} onClick={onMagicLink}>
           Email me a magic link
         </Button>
@@ -152,6 +158,27 @@ export function AdminLoginForm({ methods }: { methods: LoginMethods }) {
           Sign in with Microsoft
         </Button>
       )}
+
+      <div className="flex justify-between pt-2 text-xs text-muted-foreground">
+        {mode === "sign-in" ? (
+          <>
+            {methods.emailPassword && (
+              <ProgressLink href={`/register?next=${encodeURIComponent(next)}`} className="underline">
+                Need an account? Sign up
+              </ProgressLink>
+            )}
+            {methods.emailPassword && (
+              <ProgressLink href="/reset-password" className="underline">
+                Forgot password?
+              </ProgressLink>
+            )}
+          </>
+        ) : (
+          <ProgressLink href={`/login?next=${encodeURIComponent(next)}`} className="underline">
+            Have an account? Sign in
+          </ProgressLink>
+        )}
+      </div>
     </div>
   );
 }

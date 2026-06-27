@@ -29,5 +29,12 @@ export async function register() {
     } catch (error) {
       persist(error, "seedRbac");
     }
+
+    // Seed the singleton settings row from env on first boot. Idempotent.
+    try {
+      await getContainer().seedSettings();
+    } catch (error) {
+      persist(error, "seedSettings");
+    }
   }
 }

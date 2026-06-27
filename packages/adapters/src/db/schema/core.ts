@@ -19,6 +19,11 @@ export const core_users = pgTable("core_users", {
   email_verified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   is_admin: boolean("is_admin").notNull().default(false),
+  // Registration approval gate. Existing users migrate to 'active'; new sign-ups
+  // may land 'pending' when approval is required (see admin_settings auth).
+  status: text("status", { enum: ["active", "pending", "rejected"] })
+    .notNull()
+    .default("active"),
   cert_fingerprint: text("cert_fingerprint"),
   cert_subject_dn: text("cert_subject_dn"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

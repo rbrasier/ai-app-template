@@ -43,6 +43,20 @@
       "when": 1782511204273,
       "tag": "0005_green_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782541481466,
+      "tag": "0006_ordinary_cargill",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782543255268,
+      "tag": "0007_oval_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

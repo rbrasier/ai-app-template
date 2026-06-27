@@ -19,6 +19,7 @@ import pc from "picocolors";
 import {
   buildDatabaseUrl,
   buildPackFilename,
+  generateEncryptionKey,
   generateSecret,
   isDatabaseUrl,
   isDirectoryEmpty,
@@ -388,6 +389,7 @@ async function scaffold(opts: ScaffoldOptions) {
     APP_NAME: projectName,
     DATABASE_URL: databaseUrl,
     BETTER_AUTH_SECRET: authSecret,
+    APP_SETTINGS_ENCRYPTION_KEY: generateEncryptionKey(),
     ADMIN_SEED_EMAIL: adminEmail,
     AI_DEFAULT_PROVIDER: aiProvider,
     AUTH_METHOD: authMethod,

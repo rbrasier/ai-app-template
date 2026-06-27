@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { genericOAuth, microsoftEntraId } from "better-auth/plugins/generic-oauth";
+import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   core_accounts,
@@ -36,6 +38,10 @@ export interface AuthConfig {
   readonly baseURL: string;
   readonly adminSeedEmail: string | undefined;
   readonly methods: AuthMethodsConfig;
+  // New registrations land 'active' when true, otherwise 'pending' approval.
+  readonly allowRegistrationWithoutApproval: boolean;
+  // Invoked by Better Auth's reset flow with the tokenised reset URL.
+  readonly sendPasswordReset?: (input: { email: string; url: string }) => Promise<void>;
 }
 
 /**
@@ -132,11 +138,59 @@ export const createAuth = (db: Database, config: AuthConfig): Auth => {
     }),
     secret: config.secret,
     baseURL: config.baseURL,
-    emailAndPassword: { enabled: config.methods.emailPassword },
-    user: fieldMapping.user,
+    emailAndPassword: {
+      enabled: config.methods.emailPassword,
+      ...(config.sendPasswordReset
+        ? {
+            sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+              await config.sendPasswordReset?.({ email: user.email, url });
+            },
+          }
+        : {}),
+    },
+    user: {
+      ...fieldMapping.user,
+      // `status` already matches its snake_case column, so no field remap — it is
+      // declared here only so Better Auth persists the value our hook sets.
+      additionalFields: {
+        status: { type: "string", required: false, input: false, defaultValue: "active" },
+      },
+    },
     session: fieldMapping.session,
     account: fieldMapping.account,
     verification: fieldMapping.verification,
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user: Record<string, unknown>) => ({
+            data: {
+              ...user,
+              status: config.allowRegistrationWithoutApproval ? "active" : "pending",
+            },
+          }),
+        },
+      },
+      session: {
+        create: {
+          // Gate session creation (sign-in and post-signup) on user status so
+          // pending/rejected accounts cannot hold a session.
+          before: async (session: { userId: string }) => {
+            const [row] = await db
+              .select({ status: core_users.status })
+              .from(core_users)
+              .where(eq(core_users.id, session.userId))
+              .limit(1);
+            if (row && row.status !== "active") {
+              const message =
+                row.status === "pending"
+                  ? "Your account is awaiting administrator approval."
+                  : "Your account is not permitted to sign in.";
+              throw new APIError("FORBIDDEN", { message });
+            }
+          },
+        },
+      },
+    },
     plugins,
   }) as unknown as Auth;
 };
