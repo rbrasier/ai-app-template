@@ -24,7 +24,7 @@ export class AesSecretCipher implements ISecretCipher {
   encrypt(plaintext: string): Result<string> {
     try {
       const iv = randomBytes(IV_BYTES);
-      const cipher = createCipheriv(ALGORITHM, this.key, iv);
+      const cipher = createCipheriv(ALGORITHM, this.key, iv, { authTagLength: AUTH_TAG_BYTES });
       const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
       const authTag = cipher.getAuthTag();
       return ok(Buffer.concat([iv, authTag, ciphertext]).toString("base64"));
@@ -42,7 +42,8 @@ export class AesSecretCipher implements ISecretCipher {
       const iv = bytes.subarray(0, IV_BYTES);
       const authTag = bytes.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES);
       const payload = bytes.subarray(IV_BYTES + AUTH_TAG_BYTES);
-      const decipher = createDecipheriv(ALGORITHM, this.key, iv);
+      // Pin the expected GCM tag length so a truncated tag cannot be accepted.
+      const decipher = createDecipheriv(ALGORITHM, this.key, iv, { authTagLength: AUTH_TAG_BYTES });
       decipher.setAuthTag(authTag);
       const plaintext = Buffer.concat([decipher.update(payload), decipher.final()]);
       return ok(plaintext.toString("utf8"));
