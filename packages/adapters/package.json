@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/adapters",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "type": "module",
   "description": "Framework adapters — Drizzle, Better Auth, Vercel AI SDK, LangGraph, health checks, logging, observability.",
   "main": "./src/index.ts",
@@ -127,8 +127,8 @@
     "@ai-sdk/openai": "^1.0.0",
     "@langchain/core": "^0.3.0",
     "@langchain/langgraph": "^0.2.0",
-    "@rbrasier/domain": ">=1.0.3",
-    "@rbrasier/shared": ">=1.0.3",
+    "@rbrasier/domain": ">=2.0.0",
+    "@rbrasier/shared": ">=2.0.0",
     "ai": "^4.0.0",
     "better-auth": "^1.0.0",
     "drizzle-orm": "^0.45.2",

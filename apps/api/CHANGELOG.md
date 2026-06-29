@@ -1,5 +1,16 @@
 # @rbrasier/api
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [96885c0]
+- Updated dependencies [88cbb79]
+  - @rbrasier/domain@2.0.0
+  - @rbrasier/shared@2.0.0
+  - @rbrasier/application@2.0.0
+  - @rbrasier/adapters@2.0.0
+
 ## 0.2.2
 
 ### Patch Changes

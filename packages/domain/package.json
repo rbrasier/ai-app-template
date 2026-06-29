@@ -1,6 +1,6 @@
 {
   "name": "@rbrasier/domain",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "type": "module",
   "description": "Framework core — entities, port interfaces, Result type, DomainError. Zero external dependencies.",
   "main": "./src/index.ts",
